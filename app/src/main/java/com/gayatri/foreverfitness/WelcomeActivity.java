@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.text.DecimalFormat;
 import java.util.Calendar;
 
 public class WelcomeActivity extends AppCompatActivity implements View.OnClickListener {
@@ -95,6 +96,8 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
             }
         }else if(v.getId() == R.id.SwitchImperial || v.getId() == R.id.TxtChangeToImperialHeader) {
             //If the user changes the program to imperial or metric
+            DecimalFormat df2 = new DecimalFormat("#.##");
+
             if (isImperial == false) {
                 isImperial = true;
                 textViewWeight.setText("Weight: Lbs");
@@ -102,6 +105,13 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
                 switchImperial.setChecked(true);
                 txtMeasurementHeader.setText("Measurement System - Imperial");
                 txtChangeToImperialHeader.setText("Change to Metric");
+                if(!editTextWeight.getText().toString().isEmpty()) {
+                    editTextWeight.setText(Double.toString(Double.parseDouble(df2.format(Double.parseDouble(editTextWeight.getText().toString()) * 2.205))));
+                }
+                if(!editTextHeight.getText().toString().isEmpty()) {
+                    editTextHeight.setText(Double.toString (Double.parseDouble(df2.format(Double.parseDouble(editTextHeight.getText().toString()) * 3.28084))));
+                }
+
             }else{
                 isImperial = false;
                 textViewWeight.setText("Weight: Kg");
@@ -109,6 +119,12 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
                 switchImperial.setChecked(false);
                 txtMeasurementHeader.setText("Measurement System - Metric");
                 txtChangeToImperialHeader.setText("Change to Imperial");
+                if(!editTextWeight.getText().toString().isEmpty()) {
+                    editTextWeight.setText(Double.toString (Double.parseDouble(df2.format(Double.parseDouble(editTextWeight.getText().toString()) / 2.205))));
+                }
+                if(!editTextHeight.getText().toString().isEmpty()) {
+                    editTextHeight.setText(Double.toString (Double.parseDouble(df2.format(Double.parseDouble(editTextHeight.getText().toString()) / 3.28084))));
+                }
             }
         }else if(v.getId() == R.id.BtnCreateUser){
 
