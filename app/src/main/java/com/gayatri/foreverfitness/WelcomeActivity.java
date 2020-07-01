@@ -18,13 +18,15 @@ import java.util.Calendar;
 
 public class WelcomeActivity extends AppCompatActivity implements View.OnClickListener {
     private Button btnCreateUser;
-    private EditText txtName, editTextWeight, editTextHeight;
+    private EditText editTextName, editTextWeight, editTextHeight;
     private Switch switchImperial, switchGender;
-    private TextView txtSelectDate, textViewWeight, textViewHeight, txtGender;
+    private TextView txtSelectDate, textViewWeight, txtViewHeight, txtGender, txtChangeToImperialHeader, txtMeasurementHeader;
     private DatePickerDialog.OnDateSetListener onDateSetListener;
-    private String Birthdate;
+    private String birthday;
+    private String name;
     private boolean isMale = true;
     private boolean isImperial = false;
+    private SqlLiteManager sqlLiteManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,14 +37,20 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
         switchImperial = (Switch)findViewById(R.id.SwitchImperial);
         txtSelectDate = (TextView) findViewById(R.id.TxtSelectDate);
         textViewWeight = (TextView) findViewById(R.id.TextViewWeight);
-        textViewHeight = (TextView) findViewById(R.id.TextViewHeight);
+        txtViewHeight = (TextView) findViewById(R.id.TextViewHeight);
+        txtChangeToImperialHeader =  (TextView) findViewById(R.id.TxtChangeToImperialHeader);
+        txtMeasurementHeader = (TextView) findViewById(R.id.TxtMeasurementHeader);
+        txtChangeToImperialHeader.setOnClickListener(this);
         switchImperial.setOnClickListener(this);
         switchGender.setOnClickListener(this);
         btnCreateUser.setOnClickListener(this);
-        txtName = (EditText) findViewById (R.id.TxtName);
-        txtGender = (TextView) findViewById(R.id.textGender);
+        editTextName = (EditText) findViewById (R.id.EditTxtName);
+        txtGender = (TextView) findViewById(R.id.txtGender);
+        txtGender.setOnClickListener(this);
         editTextWeight = (EditText)findViewById(R.id.EditTextWeight);
         editTextHeight = (EditText)findViewById(R.id.EditTextHeight);
+        sqlLiteManager = new SqlLiteManager(this);
+        IsUserExist();
 
         txtSelectDate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,8 +74,8 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                 month = month + 1;
-                Birthdate = day+"-"+month+"-"+year;
-                txtSelectDate.setText(Birthdate);
+                birthday = day+"-"+month+"-"+year;
+                txtSelectDate.setText(birthday);
             }
         };
     }
@@ -75,57 +83,89 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onClick(View v) {
 
-        if(v.getId() == R.id.SwitchGender){
+        if(v.getId() == R.id.SwitchGender || v.getId() == R.id.txtGender){
             if (isMale == true){
                 isMale = false;
                 txtGender.setText("Female");
+                switchGender.setChecked(true);
             }else{
                 isMale = true;
                 txtGender.setText("Male");
+                switchGender.setChecked(false);
             }
-        }else if(v.getId() == R.id.SwitchImperial) {
+        }else if(v.getId() == R.id.SwitchImperial || v.getId() == R.id.TxtChangeToImperialHeader) {
             //If the user changes the program to imperial or metric
             if (isImperial == false) {
                 isImperial = true;
                 textViewWeight.setText("Weight: Lbs");
-                textViewHeight.setText("Height: Feet");
-
+                txtViewHeight.setText("Height: Feet");
+                switchImperial.setChecked(true);
+                txtMeasurementHeader.setText("Measurement System - Imperial");
+                txtChangeToImperialHeader.setText("Change to Metric");
             }else{
                 isImperial = false;
                 textViewWeight.setText("Weight: Kg");
-                textViewHeight.setText("Height: Meters");
-
+                txtViewHeight.setText("Height: Meters");
+                switchImperial.setChecked(false);
+                txtMeasurementHeader.setText("Measurement System - Metric");
+                txtChangeToImperialHeader.setText("Change to Imperial");
             }
         }else if(v.getId() == R.id.BtnCreateUser){
-            if(checkInputValidations() && txtName.getText().toString().length() != 0) {
-                Intent HomePage = new Intent(this, MainActivity.class);
-                finish();
-                startActivity(HomePage);
+
+            if(checkInputValidations()) {
+                if (isImperial == true) {
+                    sqlLiteManager.addUser(editTextName.getText().toString(),  Double.parseDouble(editTextWeight.getText().toString()) / 2.20462, Double.parseDouble(editTextHeight.getText().toString()) / 3.28084, isMale, isImperial, birthday);
+                } else {
+                    sqlLiteManager.addUser(editTextName.getText().toString(), Double.parseDouble(editTextWeight.getText().toString()), Double.parseDouble(editTextHeight.getText().toString()), isMale, isImperial, birthday);
+                }
+                this.name = editTextName.getText().toString();
+                GotoMainActivity();
             }
         }
     }
 
+    private void GotoMainActivity() {
+        Intent MainActivity = new Intent(this, com.gayatri.foreverfitness.MainActivity.class);
+        MainActivity.putExtra("Name",this.name);
+        MainActivity.putExtra("IsImperial",this.isImperial);
+        finish();
+        startActivity(MainActivity);
+    }
+
+    private void IsUserExist(){
+
+        if (sqlLiteManager.checkAnyUserExits()){
+            //USER EXISTS IN DATABASE
+            this.name = sqlLiteManager.getCurrentUserName();
+            GotoMainActivity();
+        }
+    }
+
     public boolean checkInputValidations(){
-        if (editTextWeight.getText().toString().length() !=0 && editTextHeight.getText().toString().length() != 0 && Birthdate != null) {
+
+
+        if (editTextName.getText().toString().length() != 0 && editTextWeight.getText().toString().length() !=0 && editTextHeight.getText().toString().length() != 0 && birthday != null) {
             return true;
-        }else if(Birthdate == null){
+        }else if(birthday == null){
 
             txtSelectDate.setTextColor(Color.parseColor("#FF0000"));
         }
 
-        if (editTextWeight.getText().toString().length() !=0 ){
 
-        }else{
-            editTextWeight.setHint("Please Enter Here");
+        if(editTextName.getText().toString().isEmpty())
+        {
+            editTextName.setHint("Please Enter Your Name Here");
+            editTextName.setHintTextColor(Color.parseColor("#FF0000"));
+        }
+
+        if (editTextWeight.getText().toString().isEmpty()){
+            editTextWeight.setHint("Please Enter Your Weight Here");
             editTextWeight.setHintTextColor(Color.parseColor("#FF0000"));
         }
 
-        if ( editTextHeight.getText().toString().length() != 0){
-
-        }else{
-            editTextHeight.setHint("Please Enter Here");
+        if ( editTextHeight.getText().toString().isEmpty()){
+            editTextHeight.setHint("Please Enter Your Height Here");
             editTextHeight.setHintTextColor(Color.parseColor("#FF0000"));
-
         }
         return false;
     }
