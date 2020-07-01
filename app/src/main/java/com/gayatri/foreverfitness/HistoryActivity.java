@@ -13,7 +13,7 @@ import android.widget.TextView;
 public class HistoryActivity extends AppCompatActivity {
 
     private LinearLayout linearLayoutHistory;
-    private TextView txtDate,txtSteps,txtWeight;
+    private TextView txtDate,txtWeight;
     private Button txtTakeMeBack;
     private boolean isImperial = false;
     private SqlLiteManager sqlLiteManager;
@@ -36,19 +36,16 @@ public class HistoryActivity extends AppCompatActivity {
             cursor.moveToNext();
             View view = layoutInflater.inflate(R.layout.activity_history_details, linearLayoutHistory, false);
             txtDate = view.findViewById(R.id.TxtDate);
-            txtSteps = view.findViewById(R.id.TxtSteps);
+
             txtWeight = view.findViewById(R.id.TxtWeight);
+            txtDate.setText(cursor.getString(3));
 
-            txtDate.setText(cursor.getString(5));
-            txtSteps.setText(cursor.getString(1));
-
-            double weight = 50.0;
-            if(cursor.getString(2) != null){
+            if(cursor.getString(1) != null){
 
                 if (isImperial == false){
-                    txtWeight.setText( (cursor.getString(2)) + " Kg");
+                    txtWeight.setText( (cursor.getString(1)) + " Kg");
                 }else{
-                    int imperial = (int) (Integer.parseInt(cursor.getString(2))*2.205);
+                    int imperial = (int) (Integer.parseInt(cursor.getString(1))*2.205);
                     txtWeight.setText(imperial + " Lbs");
                 }
             }else{

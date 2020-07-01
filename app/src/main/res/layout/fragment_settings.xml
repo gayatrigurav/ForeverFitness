@@ -24,7 +24,9 @@
                 android:layout_height="50dp"
                 android:orientation="horizontal"
                 android:paddingLeft="10dp"
-                android:paddingRight="10dp">
+                android:paddingRight="10dp"
+                android:textAlignment="center"
+                android:gravity="center_horizontal">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -55,7 +57,9 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:textAlignment="center"
+                android:gravity="center_horizontal">
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -82,12 +86,11 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView11"
+                android:id="@+id/TxtMeasurementHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="General Information"
-                android:textSize="24sp"
-                tools:text="General Information" />
+                android:text="Measurement System - Metric"
+                android:textSize="24sp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -96,11 +99,11 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/textView"
+                    android:id="@+id/TxtChangeToImperialHeader"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Toggle Imperial"
+                    android:text="Change to Imperial"
                     android:textSize="20sp" />
 
                 <Switch
@@ -143,32 +146,6 @@
                 android:text="Current Goals"
                 android:textSize="24sp"
                 tools:text="Current Goals" />
-
-            <LinearLayout
-                android:id="@+id/LinearLayoutSteps"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/TextViewSetTstepGoal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Set Step Goal"
-                    android:textSize="20sp" />
-
-                <SeekBar
-                    android:id="@+id/SeekBarStepGoal"
-                    style="@android:style/Widget.DeviceDefault.Light.SeekBar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:max="15"
-
-                    android:progress="5" />
-
-            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/LinearLayoutWeight"

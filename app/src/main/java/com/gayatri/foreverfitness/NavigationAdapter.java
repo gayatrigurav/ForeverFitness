@@ -53,18 +53,18 @@ public class NavigationAdapter extends PagerAdapter {
     //Dashboard Page
     private SeekBar weightBar;
     private TextView displayWeight, txtViewBMI;
-    PieChart weightPieLimit, stepPie;
+    PieChart weightPieLimit;
     private Button btnSubmitWight;
     List<PieEntry> weightPieList;
-    private int steps = 0;
 
     //Settings Page
     private Button btnDeleteAcount;
-    private TextView name, textViewSetTstepGoal, textViewSetWeightGoal;
+    private TextView name, textViewSetWeightGoal, txtChangeToImperialHeader, txtMeasurementHeader;
     private Switch switchImperial;
-    private SeekBar seekBarStepGoal,seekBarWeightGoal;
+    private SeekBar seekBarWeightGoal;
     private boolean isImperial;
     private Button btnViewHistory;
+
 
     //Database
     private SqlLiteManager sqlLiteManager;
@@ -76,7 +76,6 @@ public class NavigationAdapter extends PagerAdapter {
         sqlLiteManager = new SqlLiteManager(context);
         sqlLiteManager.getUserId(this.AccountName);
         this.isImperial = sqlLiteManager.getUserImperial();
-        steps = sqlLiteManager.loadSteps();
     }
 
     @Override
@@ -162,12 +161,37 @@ public class NavigationAdapter extends PagerAdapter {
             btnDeleteAcount = view.findViewById(R.id.BtnDeleteAccount);
             name = view.findViewById(R.id.Name);
             switchImperial = view.findViewById(R.id.SwitchImperial);
-            textViewSetTstepGoal = view.findViewById(R.id.TextViewSetTstepGoal);
+
             textViewSetWeightGoal = view.findViewById(R.id.TextViewSetWeightGoal);
+            txtChangeToImperialHeader =  view.findViewById(R.id.TxtChangeToImperialHeader);
+            txtMeasurementHeader = view.findViewById(R.id.TxtMeasurementHeader);
             seekBarWeightGoal = (SeekBar) view.findViewById(R.id.SeekBarWeightGoal);
             seekBarWeightGoal.setMax(8);
-            seekBarStepGoal = (SeekBar) view.findViewById(R.id.SeekBarStepGoal);
-            seekBarStepGoal.setMax(10);
+
+            txtChangeToImperialHeader.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    isImperial = sqlLiteManager.getUserImperial();
+                        //If the user changes the program to imperial or metric
+                        if (isImperial == false) {
+                            isImperial = true;
+                            sqlLiteManager.setUserImperial(true);
+                            switchImperial.setChecked(true);
+                            txtMeasurementHeader.setText("Measurement System - Imperial");
+                            txtChangeToImperialHeader.setText("Change to Metric");
+                            textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((seekBarWeightGoal.getProgress()+4)*10)*2.205) + "Lbs");
+                        }else{
+                            isImperial = false;
+                            sqlLiteManager.setUserImperial(false);
+                            switchImperial.setChecked(false);
+                            txtMeasurementHeader.setText("Measurement System - Metric");
+                            txtChangeToImperialHeader.setText("Change to Imperial");
+                            textViewSetWeightGoal.setText("Current Weight Goal: " + (seekBarWeightGoal.getProgress()+4)*10 + "Kg");
+                        }
+
+                }
+            });
 
             switchImperial.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -176,8 +200,12 @@ public class NavigationAdapter extends PagerAdapter {
                     sqlLiteManager.setUserImperial(isImperial);
                     if (isImperial == false){
                         textViewSetWeightGoal.setText("Current Weight Goal: " + (seekBarWeightGoal.getProgress()+4)*10 + "Kg");
+                        txtMeasurementHeader.setText("Measurement System - Metric");
+                        txtChangeToImperialHeader.setText("Change to Imperial");
                     }else{
                         textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((seekBarWeightGoal.getProgress()+4)*10)*2.205) + "Lbs");
+                        txtMeasurementHeader.setText("Measurement System - Imperial");
+                        txtChangeToImperialHeader.setText("Change to Metric");
                     }
                 }
             });
@@ -189,44 +217,16 @@ public class NavigationAdapter extends PagerAdapter {
                 }
             });
 
-            seekBarStepGoal.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    textViewSetTstepGoal.setText("Current Step Goal: " + (progress+5)*1000 + " steps");
-
-                    if (sqlLiteManager.getUserImperial() == false){
-                        textViewSetWeightGoal.setText("Current Weight Goal: " + (seekBarWeightGoal.getProgress()+4)*10 + "Kg");
-                    }else{
-                        textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((seekBarWeightGoal.getProgress()+4)*10)*2.205) + "Lbs");
-                    }
-
-                    sqlLiteManager.updateUserGoal((progress+5)*1000,(seekBarWeightGoal.getProgress()+4)*10);
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-            });
 
             seekBarWeightGoal.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    textViewSetTstepGoal.setText("Current Step Goal: " + (seekBarStepGoal.getProgress()+5)*1000 + " steps");
-
                     if (sqlLiteManager.getUserImperial() == false){
                         textViewSetWeightGoal.setText("Current Weight Goal: " + (progress+4)*10 + "Kg");
                     }else{
                         textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((progress+4)*10)*2.205) + "Lbs");
                     }
-
-
-                    sqlLiteManager.updateUserGoal((seekBarStepGoal.getProgress()+5)*1000,(progress+4)*10);
+                    sqlLiteManager.updateUserGoal((progress+4)*10);
                 }
 
                 @Override
@@ -256,15 +256,9 @@ public class NavigationAdapter extends PagerAdapter {
             String name = sqlLiteManager.getName();
             this.name.setText(name);
             switchImperial.setChecked(isImperial);
-            double[] userGoal = sqlLiteManager.getUserGoal();                                                                                  //gets the users current set goal that they have Established
-            textViewSetTstepGoal.setText("Current Step Goal: " + userGoal[0] + " steps");
-            //int test1 = ((int)userGoal[0]/1000-5);
-            seekBarStepGoal.setProgress(((int)userGoal[0]/1000-5));
-            //seekBarStepGoal.setProgress(5);
-            textViewSetWeightGoal.setText("Current Weight Goal: " + userGoal[1] + "Kg");
-            //int test2 = (int)(userGoal[1]/10-4);
-            seekBarWeightGoal.setProgress((int)(userGoal[1]/10-4));
-            //seekBarWeightGoal.setProgress(4);
+            double userGoal = sqlLiteManager.getUserGoal();
+            textViewSetWeightGoal.setText("Current Weight Goal: " + userGoal + "Kg");
+            seekBarWeightGoal.setProgress((int)(userGoal/10-4));
         }
         container.addView(view);
         return view;
@@ -290,11 +284,9 @@ public class NavigationAdapter extends PagerAdapter {
         weightPieLimit.setUsePercentValues(true);
         List<PieEntry> weightPieList = new ArrayList<>();
         double userWeight = sqlLiteManager.loadWeight();//70 defaults
-        double[] weight = sqlLiteManager.getUserGoal();
-        int getweight = (int)weight[1];
+        int getweight = (int)sqlLiteManager.getUserGoal();;
 
         if((int)userWeight< getweight){
-
             if (sqlLiteManager.getUserImperial() == false) {
                 weightPieList.add(new PieEntry((int) userWeight, (int) userWeight + " KG"));
                 weightPieList.add(new PieEntry(getweight - (int) userWeight, getweight - (int) userWeight + "KG"));
@@ -338,33 +330,6 @@ public class NavigationAdapter extends PagerAdapter {
         description.setText("");
         weightPieLimit.setDescription(description);
 
-    }
-
-    private void createPieChart(){
-
-        stepPie.setUsePercentValues(true);
-        List<PieEntry> stepPieList = new ArrayList<>();
-        double[] setGoal = sqlLiteManager.getUserGoal();
-        int toGo = (int)(setGoal[0]);
-        String pieData = String.valueOf(steps);
-        String toGoSteps = String.valueOf(toGo-steps);
-        stepPieList.add(new PieEntry(steps,pieData)); //What the user has done
-        stepPieList.add(new PieEntry(toGo-steps,toGoSteps)); //What the user still needs to do
-
-        PieDataSet stepPieDataSet = new PieDataSet(stepPieList,"Steps To Reach");
-        stepPieDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-        stepPieDataSet.setDrawValues(false);
-        stepPie.setHoleRadius(30f);
-        stepPie.setTransparentCircleRadius(25f);
-
-        PieData stepPieData = new PieData(stepPieDataSet);
-        stepPie.setData(stepPieData);
-        stepPie.setNoDataText("");
-        //Used to set the discription for the Pie chart
-        Description description = new Description();
-        description.setText("");
-        stepPie.setDescription(description);
-        stepPie.invalidate();
     }
 
 

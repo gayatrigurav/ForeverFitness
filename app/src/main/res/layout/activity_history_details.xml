@@ -24,20 +24,7 @@
         tools:text="Insert Date" />
 
     <TextView
-        android:id="@+id/textView8"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Steps"
-        android:textSize="24sp" />
-
-    <TextView
-        android:id="@+id/TxtSteps"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Inset Steps Here" />
-
-    <TextView
-        android:id="@+id/textView14"
+        android:id="@+id/TxtWightHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Weight"

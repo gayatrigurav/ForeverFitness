@@ -172,7 +172,7 @@
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Change to imperial"
+                        android:text="Change to Imperial"
                         android:textSize="24sp" />
 
                     <Switch
