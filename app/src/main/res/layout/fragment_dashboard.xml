@@ -94,36 +94,11 @@
             android:layout_margin="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginLeft="10dp"
-            android:layout_marginTop="20dp"
             android:layout_marginEnd="10dp"
             android:layout_marginRight="10dp"
-            android:layout_marginBottom="20dp"
             android:layout_weight="0"
             android:background="@android:color/darker_gray" />
 
-        <TextView
-            android:id="@+id/textView15"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="BMI INDEX"
-            android:textSize="24sp" />
-
-        <TextView
-            android:id="@+id/textView16"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textSize="20sp"
-            android:text="Body mass index is the measurement of body fat based on height and weight" />
-
-        <TextView
-            android:id="@+id/textView17"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:textSize="20sp"
-            android:text="If your BMI is between 18.5 and 24.9: you're in the healthy weight range." />
 
         <TextView
             android:id="@+id/TxtViewBMI"
@@ -132,6 +107,13 @@
             android:text="InsertBMI"
             android:textSize="24sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textBMIInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BMI INDEX:- Body mass index is the measurement of body fat based on height and weight. If your BMI is between 18.5 and 24.9, you're in the healthy weight range."
+            android:textSize="20sp" />
     </LinearLayout>
 
 </LinearLayout>
