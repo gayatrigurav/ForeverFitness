@@ -24,6 +24,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
     public SqlLiteManager(Context context) {
         super(context, DatabaseName, null, DatabaseVersion);
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        //onCreate(sqLiteDatabase);
     }
 
     @Override
@@ -61,7 +62,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
                 "  milestone_ID INTEGER PRIMARY KEY autoincrement," +
                 "  weight double," +
                 "  user_ID INTEGER ," +
-                "day date,"+
+                "daytime text,"+
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
         db.execSQL(milestone);
@@ -201,10 +202,10 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     private void setDate() {
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 
-        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
-        String sql = "Select day from milestone where (user_ID = " + UserId + " and day = '" + currentDate + "')";
+        String currentDateTime = simpleDate.format(new Date(System.currentTimeMillis())); //Gets the current Date to check if data exists
+        String sql = "Select day from milestone where (user_ID = " + UserId + " and daytime = '" + currentDateTime + "')";
         try{
             Cursor data = sqLiteDatabase.rawQuery(sql, null);
             int testing = data.getCount();
@@ -212,13 +213,13 @@ class SqlLiteManager extends SQLiteOpenHelper {
             if (data.getCount() == 0) { //If the Date Does not Exist
                 ContentValues contentValues = new ContentValues();
                 contentValues.put("user_ID", this.UserId);
-                contentValues.put("day", currentDate);
+                contentValues.put("daytime", currentDateTime);
                 sqLiteDatabase.insert("milestone", null, contentValues); //if not, create Date
             }
         }catch (Exception e){                                                           //------------------Check if needed
             ContentValues contentValues = new ContentValues();
             contentValues.put("user_ID", this.UserId);
-            contentValues.put("day", currentDate);
+            contentValues.put("daytime", currentDateTime);
             sqLiteDatabase.insert("milestone", null, contentValues); //if not, create Date
         }
 
@@ -230,15 +231,15 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
 
-        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
-        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        String currentDateTime = simpleDate.format(new Date(System.currentTimeMillis())); //Gets the current Date to check if data exists
 
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID",this.UserId);
         contentValues.put("weight",weight);
-        contentValues.put("day", currentDate);
+        contentValues.put("daytime", currentDateTime);
 
-        long result = sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId + " and day = '" + currentDate + "'",null);
+        long result = sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId + " and daytime = '" + currentDateTime + "'",null);
         if (result == 0){
             sqLiteDatabase.insert("milestone",null, contentValues);
         }
@@ -248,10 +249,10 @@ class SqlLiteManager extends SQLiteOpenHelper {
     }
 
     public int loadWeight(){
-        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
-        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+        //SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        //String currentDateTime = simpleDate.format(new Date(System.currentTimeMillis())); //Gets the current Date to check if data exists
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select weight from milestone where (user_ID = " + UserId + " and day = '" + currentDate +"')";
+        String sql = "Select weight from milestone where (user_ID = " + UserId + " ORDER BY daytime DESC)";
         try{
             Cursor data = sqLiteDatabase.rawQuery(sql, null);
             data.moveToNext();
@@ -263,8 +264,8 @@ class SqlLiteManager extends SQLiteOpenHelper {
     }
 
     public double loadHeight(){
-        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
-        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+        //SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        //String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         String sql = "Select user_Height from userInfo where (user_ID = " + UserId + ")";
         try{
@@ -278,7 +279,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     public Cursor getUserHistory(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select * from milestone where (user_ID = " + UserId + ") ORDER BY milestone_ID DESC";
+        String sql = "Select * from milestone where (user_ID = " + UserId + ") and weight > 0.0 ORDER BY milestone_ID DESC";
         Cursor data = sqLiteDatabase.rawQuery(sql,null);
         return data;
     }
