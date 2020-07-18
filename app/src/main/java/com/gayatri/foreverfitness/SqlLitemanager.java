@@ -7,9 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
 import androidx.annotation.Nullable;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
@@ -53,6 +51,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
                 "  goal_ID INTEGER PRIMARY KEY autoincrement," +
                 "  user_ID INTEGER ," +
                 "  weightGoal double," +
+                "  dateGoal text," +
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
         db.execSQL(GoalTable);
@@ -62,7 +61,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
                 "  milestone_ID INTEGER PRIMARY KEY autoincrement," +
                 "  weight double," +
                 "  user_ID INTEGER ," +
-                "daytime text,"+
+                "  daytime text,"+
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
         db.execSQL(milestone);
@@ -81,18 +80,20 @@ class SqlLiteManager extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID", UserId);
         contentValues.put("weightGoal", 65);
+        contentValues.put("dateGoal", "");
         sqLiteDatabase.insert("goalTable",null, contentValues);
     }
 
-    public void updateUserGoal(double weight){
+    public void updateUserGoal(double weight, String date){
 
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("weightGoal", weight);
+        contentValues.put("dateGoal", date);
         sqLiteDatabase.update("goalTable",contentValues,"user_ID = " + UserId,null);
     }
 
-    public double getUserGoal(){
+    public double getUserWeightGoal(){
 
         double userWeightGoal=0.0;
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
@@ -104,6 +105,18 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
 
         return userWeightGoal;
+    }
+
+    public String getUserDateGoal(){
+        String userDateGoal="";
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select dateGoal from goalTable where (user_ID = " + UserId + ")";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        data.moveToNext();
+        if(data.getCount()!= 0) {
+            userDateGoal = data.getString(0);
+        }
+        return userDateGoal;
     }
 
     public String getName(){
@@ -274,6 +287,30 @@ class SqlLiteManager extends SQLiteOpenHelper {
             return Double.parseDouble(data.getString(0));
         }catch (Throwable t) {
             return  70; //Returns default Weight
+        }
+    }
+
+    public String loadBirthdate(){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select user_Birthdate from userInfo where (user_ID = " + UserId + ")";
+        try{
+            Cursor data = sqLiteDatabase.rawQuery(sql, null);
+            data.moveToNext();
+            return data.getString(0);
+        }catch (Throwable t) {
+            return  ""; //Returns default empty
+        }
+    }
+
+    public boolean loadGender(){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select user_isMale from userInfo where (user_ID = " + UserId + ")";
+        try{
+            Cursor data = sqLiteDatabase.rawQuery(sql, null);
+            data.moveToNext();
+            return (data.getInt(0)==1);
+        }catch (Throwable t) {
+            return  false; //Returns default false
         }
     }
 

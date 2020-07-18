@@ -72,6 +72,30 @@
             android:text="400"
             android:textSize="24sp" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/TxtGoaldateHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Date"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/TxtGoalDateSelect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tap to select "
+                android:textSize="20sp"
+                tools:text="Tap to select " />
+
+        </LinearLayout>
+
         <Button
             android:id="@+id/BtnSubmitWight"
             android:layout_width="158dp"

@@ -1,11 +1,16 @@
 package com.gayatri.foreverfitness;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -22,6 +27,7 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class NavigationAdapter extends PagerAdapter {
@@ -59,11 +65,17 @@ public class NavigationAdapter extends PagerAdapter {
 
     //Settings Page
     private Button btnDeleteAcount;
-    private TextView name, textViewSetWeightGoal, txtChangeToImperialHeader, txtMeasurementHeader;
-    private Switch switchImperial;
+    private TextView name, textViewSetWeightGoal, txtChangeToImperialHeader, txtMeasurementHeader, txtSelectDate, txtGoalDate, textViewWeight, txtViewHeight, txtGender;
+    private Switch switchImperial, switchGender;
     private SeekBar seekBarWeightGoal;
     private boolean isImperial;
     private Button btnViewHistory;
+
+    private EditText editTextName, editTextWeight, editTextHeight;
+    private DatePickerDialog.OnDateSetListener onDateSetListener;
+    private DatePickerDialog.OnDateSetListener onGoalDateSetListener;
+    private String birthday, goalDate;
+    private boolean isMale = true;
 
 
     //Database
@@ -167,6 +179,88 @@ public class NavigationAdapter extends PagerAdapter {
             txtMeasurementHeader = view.findViewById(R.id.TxtMeasurementHeader);
             seekBarWeightGoal = (SeekBar) view.findViewById(R.id.SeekBarWeightGoal);
             seekBarWeightGoal.setMax(8);
+            //additional setting entities
+            editTextName = (EditText) view.findViewById(R.id.EditTxtName);
+            editTextWeight = (EditText)view.findViewById(R.id.EditTextWeight);
+            editTextHeight = (EditText)view.findViewById(R.id.EditTextHeight);
+            txtGender = (TextView) view.findViewById(R.id.txtGender);
+            switchGender = (Switch) view.findViewById(R.id.SwitchGender);
+            txtSelectDate = (TextView) view.findViewById(R.id.TxtSelectDate);
+            txtGoalDate = (TextView)view.findViewById(R.id.TxtGoalDateSelect);
+            textViewWeight = (TextView) view.findViewById(R.id.TextViewWeight);
+            txtViewHeight = (TextView) view.findViewById(R.id.TextViewHeight);
+
+
+
+            txtGoalDate.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Calendar cal = Calendar.getInstance();
+                    int year = cal.get(Calendar.YEAR);
+                    int month = cal.get(Calendar.MONTH);
+                    int day = cal.get(Calendar.DAY_OF_MONTH);
+
+                    DatePickerDialog dialog = new DatePickerDialog(
+                            context,
+                            android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                            onGoalDateSetListener,
+                            year,month,day);
+                    dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                    dialog.show();
+                }
+            });
+
+            onGoalDateSetListener = new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                    month = month + 1;
+                    goalDate = day+"-"+month+"-"+year;
+                    txtGoalDate.setText(birthday);
+                }
+            };
+
+            txtSelectDate.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Calendar cal = Calendar.getInstance();
+                    int year = cal.get(Calendar.YEAR);
+                    int month = cal.get(Calendar.MONTH);
+                    int day = cal.get(Calendar.DAY_OF_MONTH);
+
+                    DatePickerDialog dialog = new DatePickerDialog(
+                            context,
+                            android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                            onDateSetListener,
+                            year,month,day);
+                    dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                    dialog.show();
+                }
+            });
+
+            onDateSetListener = new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                    month = month + 1;
+                    birthday = day+"-"+month+"-"+year;
+                    txtSelectDate.setText(birthday);
+                }
+            };
+
+            switchGender.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    isMale = sqlLiteManager.loadGender();
+                    if (isMale == true){
+                        isMale = false;
+                        txtGender.setText("Female");
+                        switchGender.setChecked(true);
+                    }else{
+                        isMale = true;
+                        txtGender.setText("Male");
+                        switchGender.setChecked(false);
+                    }
+                }
+            });
 
             txtChangeToImperialHeader.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -226,7 +320,7 @@ public class NavigationAdapter extends PagerAdapter {
                     }else{
                         textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((progress+4)*10)*2.205) + "Lbs");
                     }
-                    sqlLiteManager.updateUserGoal((progress+4)*10);
+                    sqlLiteManager.updateUserGoal((progress+4)*10, "");
                 }
 
                 @Override
@@ -256,9 +350,17 @@ public class NavigationAdapter extends PagerAdapter {
             String name = sqlLiteManager.getName();
             this.name.setText(name);
             switchImperial.setChecked(isImperial);
-            double userGoal = sqlLiteManager.getUserGoal();
+            double userGoal = sqlLiteManager.getUserWeightGoal();
             textViewSetWeightGoal.setText("Current Weight Goal: " + userGoal + "Kg");
             seekBarWeightGoal.setProgress((int)(userGoal/10-4));
+            //set all info from db to controls
+            editTextName.setText(name);
+            editTextHeight.setText(Double.toString(sqlLiteManager.loadHeight()));
+            editTextWeight.setText(Double.toString(sqlLiteManager.loadWeight()));
+            txtSelectDate.setText(sqlLiteManager.loadBirthdate());
+            txtGoalDate.setText(sqlLiteManager.getUserDateGoal());
+            boolean isMale = sqlLiteManager.loadGender();
+            switchGender.setChecked(!isMale);
         }
         container.addView(view);
         return view;
@@ -284,7 +386,7 @@ public class NavigationAdapter extends PagerAdapter {
         weightPieLimit.setUsePercentValues(true);
         List<PieEntry> weightPieList = new ArrayList<>();
         double userWeight = sqlLiteManager.loadWeight();//70 defaults
-        int getweight = (int)sqlLiteManager.getUserGoal();;
+        int getweight = (int)sqlLiteManager.getUserWeightGoal();;
 
         if((int)userWeight< getweight){
             if (sqlLiteManager.getUserImperial() == false) {
