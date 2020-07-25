@@ -76,7 +76,6 @@ public class NavigationAdapter extends PagerAdapter {
     private String birthday, goalDate;
     private boolean isMale = true;
 
-
     //Database
     private SqlLiteManager sqlLiteManager;
     public NavigationAdapter(Context context, String name, boolean isImperial)
@@ -564,7 +563,6 @@ public class NavigationAdapter extends PagerAdapter {
         weightPieLimit.setDescription(description);
 
     }
-
 
     public int getCurrentPageIndex(){
         return position;
