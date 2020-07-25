@@ -75,21 +75,21 @@ class SqlLiteManager extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void setDefaultGoals(){
+    public void setDefaultGoals(Double goalWeight, String goalDate){
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID", UserId);
-        contentValues.put("weightGoal", 65);
-        contentValues.put("dateGoal", "");
+        contentValues.put("weightGoal", goalWeight);
+        contentValues.put("dateGoal", goalDate);
         sqLiteDatabase.insert("goalTable",null, contentValues);
     }
 
-    public void updateUserGoal(double weight, String date){
+    public void setUserWeightGoal(double weight){
 
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("weightGoal", weight);
-        contentValues.put("dateGoal", date);
+        //contentValues.put("dateGoal", date);
         sqLiteDatabase.update("goalTable",contentValues,"user_ID = " + UserId,null);
     }
 
@@ -107,6 +107,13 @@ class SqlLiteManager extends SQLiteOpenHelper {
         return userWeightGoal;
     }
 
+    public void setUserDateGoal(String goalDate){
+
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("dateGoal", goalDate);
+        sqLiteDatabase.update("goalTable",contentValues,"user_ID = " + UserId,null);
+    }
     public String getUserDateGoal(){
         String userDateGoal="";
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
@@ -128,7 +135,14 @@ class SqlLiteManager extends SQLiteOpenHelper {
         return data.getString(0);
     }
 
-    public boolean addUser(String Name, double weight, double height,boolean isMale, boolean isImperial, String birthdate){
+    public void setName(String Name){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_Name", Name);
+        sqLiteDatabase.update("userInfo",contentValues,"user_ID = " + UserId,null);
+    }
+
+    public boolean addUser(String Name, double weight, double height,boolean isMale, boolean isImperial, String birthdate, Double goalWeight, String goalDate){
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_Name", Name);
@@ -143,7 +157,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
         else{
             getUserId(Name);
-            setDefaultGoals();
+            setDefaultGoals(goalWeight, goalDate);
             return true;
         }
     }
@@ -215,10 +229,9 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     private void setDate() {
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
-
+        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd");
         String currentDateTime = simpleDate.format(new Date(System.currentTimeMillis())); //Gets the current Date to check if data exists
-        String sql = "Select day from milestone where (user_ID = " + UserId + " and daytime = '" + currentDateTime + "')";
+        String sql = "Select daytime from milestone where (user_ID = " + UserId + " and daytime = '" + currentDateTime + "')";
         try{
             Cursor data = sqLiteDatabase.rawQuery(sql, null);
             int testing = data.getCount();
@@ -240,13 +253,8 @@ class SqlLiteManager extends SQLiteOpenHelper {
     }
 
 
-    public void saveWeight(double weight){
-
+    public void saveWeightAndDate(double weight, String currentDateTime){
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
-
-        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
-        String currentDateTime = simpleDate.format(new Date(System.currentTimeMillis())); //Gets the current Date to check if data exists
-
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID",this.UserId);
         contentValues.put("weight",weight);
@@ -256,14 +264,9 @@ class SqlLiteManager extends SQLiteOpenHelper {
         if (result == 0){
             sqLiteDatabase.insert("milestone",null, contentValues);
         }
-
-
-
     }
 
-    public int loadWeight(){
-        //SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
-        //String currentDateTime = simpleDate.format(new Date(System.currentTimeMillis())); //Gets the current Date to check if data exists
+    public int getWeight(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         String sql = "Select weight from milestone where (user_ID = " + UserId + " ORDER BY daytime DESC)";
         try{
@@ -276,9 +279,39 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
     }
 
-    public double loadHeight(){
-        //SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
-        //String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+    public String getDate(){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select daytime from milestone where user_ID = " + UserId + " ORDER BY daytime DESC";
+        try{
+            Cursor data = sqLiteDatabase.rawQuery(sql, null);
+            data.moveToNext();
+            return data.getString(0);
+
+        }catch (Throwable t) {
+            return  ""; //Returns default empty date
+        }
+    }
+
+    public double getRegisteredWeight(){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select user_Weight from userInfo where (user_ID = " + UserId + ")";
+        try{
+            Cursor data = sqLiteDatabase.rawQuery(sql, null);
+            data.moveToNext();
+            return Double.parseDouble(data.getString(0));
+        }catch (Throwable t) {
+            return  70; //Returns default Weight
+        }
+    }
+
+    public void setRegisteredWeight(double weight){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_Weight", weight);
+        sqLiteDatabase.update("userInfo",contentValues,"user_ID = " + UserId,null);
+    }
+
+    public double getHeight(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         String sql = "Select user_Height from userInfo where (user_ID = " + UserId + ")";
         try{
@@ -290,7 +323,14 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
     }
 
-    public String loadBirthdate(){
+    public void setHeight(double height){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_Height", height);
+        sqLiteDatabase.update("userInfo",contentValues,"user_ID = " + UserId,null);
+    }
+
+    public String getBirthday(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         String sql = "Select user_Birthdate from userInfo where (user_ID = " + UserId + ")";
         try{
@@ -302,7 +342,15 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
     }
 
-    public boolean loadGender(){
+    public void setBirthday(String birthDate){
+
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_Birthdate", birthDate);
+        sqLiteDatabase.update("userInfo",contentValues,"user_ID = " + UserId,null);
+    }
+
+    public boolean getGender(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         String sql = "Select user_isMale from userInfo where (user_ID = " + UserId + ")";
         try{
@@ -314,9 +362,17 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
     }
 
+    public void setGender(boolean isMale){
+
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_isMale", isMale);
+        sqLiteDatabase.update("userInfo",contentValues,"user_ID = " + UserId,null);
+    }
+
     public Cursor getUserHistory(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select * from milestone where (user_ID = " + UserId + ") and weight > 0.0 ORDER BY milestone_ID DESC";
+        String sql = "Select * from milestone where user_ID = " + UserId + " and weight > 0.0 and daytime != \"\" ORDER BY milestone_ID DESC";
         Cursor data = sqLiteDatabase.rawQuery(sql,null);
         return data;
     }

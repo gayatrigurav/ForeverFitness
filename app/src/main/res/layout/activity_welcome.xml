@@ -27,7 +27,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Welcome! Please enter your name"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
 
                     <EditText
                         android:id="@+id/EditTxtName"
@@ -35,7 +35,7 @@
                         android:layout_height="wrap_content"
                         android:ems="10"
                         android:inputType="textPersonName"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -49,7 +49,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Weight: Kg"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         tools:text="Weight: Kgs"/>
 
                     <EditText
@@ -71,7 +71,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Height: Meters"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         tools:text="Height: Meters" />
 
                     <EditText
@@ -94,7 +94,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Measurement System - Metric"
-                    android:textSize="24sp" />
+                    android:textSize="20sp" />
 
             </LinearLayout>
             <LinearLayout
@@ -110,7 +110,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Change to Imperial"
-                    android:textSize="24sp" />
+                    android:textSize="20sp" />
 
                 <Switch
                     android:id="@+id/SwitchImperial"
@@ -134,7 +134,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Gender"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
 
                 </LinearLayout>
 
@@ -151,7 +151,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Male"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
 
                     <Switch
                         android:id="@+id/SwitchGender"
@@ -172,17 +172,79 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Birthdate"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
 
                     <TextView
                         android:id="@+id/TxtSelectDate"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Tap to select "
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         tools:text="Tap to select " />
 
                 </LinearLayout>
+            <LinearLayout
+                android:id="@+id/LinearLayoutSetGoals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="25dp"
+                >
+
+                <TextView
+                    android:id="@+id/TxtGoalsHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Set Goals"
+                    android:textSize="20sp"
+                    tools:text="Current Goals" />
+
+                <LinearLayout
+                    android:id="@+id/LinearLayoutWeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/TextViewSetWeightGoal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Set Weight Goal"
+                        android:textSize="20sp" />
+
+                    <SeekBar
+                        android:id="@+id/SeekBarWeightGoal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="12"
+                        android:progress="4" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/TxtGoaldateHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Set Goal Date"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/TxtGoalDateSelect"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tap to select "
+                        android:textSize="20sp"
+                        tools:text="Tap to select " />
+
+                </LinearLayout>
+            </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"

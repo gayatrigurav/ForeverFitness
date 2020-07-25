@@ -31,17 +31,24 @@ public class HistoryActivity extends AppCompatActivity {
 
         LayoutInflater layoutInflater = LayoutInflater.from(this);
 
+        txtTakeMeBack = findViewById(R.id.TxtTakeMeBack);
+        txtTakeMeBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
         Cursor cursor = sqlLiteManager.getUserHistory();
         for (int i = 0; i< cursor.getCount(); i++){
-            cursor.moveToNext();
             View view = layoutInflater.inflate(R.layout.activity_history_details, linearLayoutHistory, false);
             txtDate = view.findViewById(R.id.TxtDate);
-
             txtWeight = view.findViewById(R.id.TxtWeight);
-            txtDate.setText(cursor.getString(3));
+            cursor.moveToNext();
+            String date = cursor.getString(3);
+            txtDate.setText(date);
 
             if(cursor.getString(1) != null){
-
                 if (isImperial == false){
                     txtWeight.setText( (cursor.getString(1)) + " Kg");
                 }else{
@@ -51,18 +58,7 @@ public class HistoryActivity extends AppCompatActivity {
             }else{
                 txtWeight.setText("No weight recorded");
             }
-
-
             linearLayoutHistory.addView(view);
         }
-
-        txtTakeMeBack = findViewById(R.id.TxtTakeMeBack);
-
-        txtTakeMeBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
     }
 }

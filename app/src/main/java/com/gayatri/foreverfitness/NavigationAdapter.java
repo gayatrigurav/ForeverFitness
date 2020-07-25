@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,29 +17,23 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
-
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
-
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
 public class NavigationAdapter extends PagerAdapter {
-
-
-
     public interface MyCustomObjectListener {
         // need to pass relevant arguments related to the event triggered
         public void onObjectReady(String title);
-
     }
 
     public void setCustomObjectListener(MyCustomObjectListener myCustomObjectListener) {
@@ -62,6 +58,9 @@ public class NavigationAdapter extends PagerAdapter {
     PieChart weightPieLimit;
     private Button btnSubmitWight;
     List<PieEntry> weightPieList;
+    private TextView txtCurrentDateSelect;
+    private DatePickerDialog.OnDateSetListener onCurrentDateSetListener;
+    private String currentDate;
 
     //Settings Page
     private Button btnDeleteAcount;
@@ -121,16 +120,36 @@ public class NavigationAdapter extends PagerAdapter {
             weightPieLimit = view.findViewById(R.id.WeightLimitPie);
             btnSubmitWight = view.findViewById(R.id.BtnSubmitWight);
             txtViewBMI = view.findViewById(R.id.TxtViewBMI);
+            txtCurrentDateSelect = view.findViewById(R.id.TxtCurrentDateSelect);
 
-            //loadweight from database
-            int loadWeight = sqlLiteManager.loadWeight();//default value 70
-            weightBar.setProgress(loadWeight * 10);
+            LoadCurrentWeightAndDate();
 
-            if (sqlLiteManager.getUserImperial() == false){
-                displayWeight.setText((double)loadWeight + " Kg");
-            }else{
-                displayWeight.setText((int)((loadWeight)*2.205) + " Lbs");
-            }
+            txtCurrentDateSelect.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Calendar cal = Calendar.getInstance();
+                    int year = cal.get(Calendar.YEAR);
+                    int month = cal.get(Calendar.MONTH);
+                    int day = cal.get(Calendar.DAY_OF_MONTH);
+
+                    DatePickerDialog dialog = new DatePickerDialog(
+                            context,
+                            android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                            onCurrentDateSetListener,
+                            year,month,day);
+                    dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                    dialog.show();
+                }
+            });
+
+            onCurrentDateSetListener = new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                    month = month + 1;
+                    currentDate = day+"-"+month+"-"+year;
+                    txtCurrentDateSelect.setText(currentDate);
+                }
+            };
 
             weightBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
@@ -161,7 +180,7 @@ public class NavigationAdapter extends PagerAdapter {
                 @Override
                 public void onClick(View v) {
                     double weightSet = weightBar.getProgress()/10;
-                    sqlLiteManager.saveWeight(weightSet);
+                    sqlLiteManager.saveWeightAndDate(weightSet, currentDate);
                     createPieChartWeight();
                     calculateBMI();
                 }
@@ -175,21 +194,75 @@ public class NavigationAdapter extends PagerAdapter {
             switchImperial = view.findViewById(R.id.SwitchImperial);
 
             textViewSetWeightGoal = view.findViewById(R.id.TextViewSetWeightGoal);
-            txtChangeToImperialHeader =  view.findViewById(R.id.TxtChangeToImperialHeader);
+            txtChangeToImperialHeader = view.findViewById(R.id.TxtChangeToImperialHeader);
             txtMeasurementHeader = view.findViewById(R.id.TxtMeasurementHeader);
             seekBarWeightGoal = (SeekBar) view.findViewById(R.id.SeekBarWeightGoal);
             seekBarWeightGoal.setMax(8);
             //additional setting entities
             editTextName = (EditText) view.findViewById(R.id.EditTxtName);
-            editTextWeight = (EditText)view.findViewById(R.id.EditTextWeight);
-            editTextHeight = (EditText)view.findViewById(R.id.EditTextHeight);
+            editTextWeight = (EditText) view.findViewById(R.id.EditTextWeight);
+            editTextHeight = (EditText) view.findViewById(R.id.EditTextHeight);
             txtGender = (TextView) view.findViewById(R.id.txtGender);
             switchGender = (Switch) view.findViewById(R.id.SwitchGender);
             txtSelectDate = (TextView) view.findViewById(R.id.TxtSelectDate);
-            txtGoalDate = (TextView)view.findViewById(R.id.TxtGoalDateSelect);
+            txtGoalDate = (TextView) view.findViewById(R.id.TxtGoalDateSelect);
             textViewWeight = (TextView) view.findViewById(R.id.TextViewWeight);
             txtViewHeight = (TextView) view.findViewById(R.id.TextViewHeight);
 
+
+            editTextHeight.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    sqlLiteManager.setHeight(Double.parseDouble(s.toString()));
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+
+                }
+            });
+
+            editTextWeight.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    sqlLiteManager.setRegisteredWeight(Double.parseDouble(s.toString()));
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+
+                }
+            });
+
+            editTextName.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String newName = s.toString();
+                    sqlLiteManager.setName(newName);
+                    name.setText(newName);
+                    AccountName = newName;
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+
+                }
+            });
 
 
             txtGoalDate.setOnClickListener(new View.OnClickListener() {
@@ -204,7 +277,7 @@ public class NavigationAdapter extends PagerAdapter {
                             context,
                             android.R.style.Theme_Holo_Light_Dialog_MinWidth,
                             onGoalDateSetListener,
-                            year,month,day);
+                            year, month, day);
                     dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                     dialog.show();
                 }
@@ -214,8 +287,9 @@ public class NavigationAdapter extends PagerAdapter {
                 @Override
                 public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                     month = month + 1;
-                    goalDate = day+"-"+month+"-"+year;
-                    txtGoalDate.setText(birthday);
+                    goalDate = day + "-" + month + "-" + year;
+                    txtGoalDate.setText(goalDate);
+                    sqlLiteManager.setUserDateGoal(goalDate);
                 }
             };
 
@@ -231,7 +305,7 @@ public class NavigationAdapter extends PagerAdapter {
                             context,
                             android.R.style.Theme_Holo_Light_Dialog_MinWidth,
                             onDateSetListener,
-                            year,month,day);
+                            year, month, day);
                     dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                     dialog.show();
                 }
@@ -241,66 +315,38 @@ public class NavigationAdapter extends PagerAdapter {
                 @Override
                 public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                     month = month + 1;
-                    birthday = day+"-"+month+"-"+year;
+                    birthday = day + "-" + month + "-" + year;
                     txtSelectDate.setText(birthday);
+                    sqlLiteManager.setBirthday(birthday);
                 }
             };
 
             switchGender.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    isMale = sqlLiteManager.loadGender();
-                    if (isMale == true){
-                        isMale = false;
-                        txtGender.setText("Female");
-                        switchGender.setChecked(true);
-                    }else{
-                        isMale = true;
-                        txtGender.setText("Male");
-                        switchGender.setChecked(false);
-                    }
+                    ToggleGender();
                 }
             });
 
+            txtGender.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ToggleGender();
+                }
+            });
+
+            final DecimalFormat df2 = new DecimalFormat("#.##");
             txtChangeToImperialHeader.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    isImperial = sqlLiteManager.getUserImperial();
-                        //If the user changes the program to imperial or metric
-                        if (isImperial == false) {
-                            isImperial = true;
-                            sqlLiteManager.setUserImperial(true);
-                            switchImperial.setChecked(true);
-                            txtMeasurementHeader.setText("Measurement System - Imperial");
-                            txtChangeToImperialHeader.setText("Change to Metric");
-                            textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((seekBarWeightGoal.getProgress()+4)*10)*2.205) + "Lbs");
-                        }else{
-                            isImperial = false;
-                            sqlLiteManager.setUserImperial(false);
-                            switchImperial.setChecked(false);
-                            txtMeasurementHeader.setText("Measurement System - Metric");
-                            txtChangeToImperialHeader.setText("Change to Imperial");
-                            textViewSetWeightGoal.setText("Current Weight Goal: " + (seekBarWeightGoal.getProgress()+4)*10 + "Kg");
-                        }
-
+                    ToggleMeasurementSystem(df2);
                 }
             });
 
             switchImperial.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    isImperial = switchImperial.isChecked();
-                    sqlLiteManager.setUserImperial(isImperial);
-                    if (isImperial == false){
-                        textViewSetWeightGoal.setText("Current Weight Goal: " + (seekBarWeightGoal.getProgress()+4)*10 + "Kg");
-                        txtMeasurementHeader.setText("Measurement System - Metric");
-                        txtChangeToImperialHeader.setText("Change to Imperial");
-                    }else{
-                        textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((seekBarWeightGoal.getProgress()+4)*10)*2.205) + "Lbs");
-                        txtMeasurementHeader.setText("Measurement System - Imperial");
-                        txtChangeToImperialHeader.setText("Change to Metric");
-                    }
+                    ToggleMeasurementSystem(df2);
                 }
             });
 
@@ -315,12 +361,12 @@ public class NavigationAdapter extends PagerAdapter {
             seekBarWeightGoal.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (sqlLiteManager.getUserImperial() == false){
-                        textViewSetWeightGoal.setText("Current Weight Goal: " + (progress+4)*10 + "Kg");
-                    }else{
-                        textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((progress+4)*10)*2.205) + "Lbs");
+                    if (sqlLiteManager.getUserImperial() == false) {
+                        textViewSetWeightGoal.setText("Current Weight Goal: " + (progress + 4) * 10 + "Kg");
+                    } else {
+                        textViewSetWeightGoal.setText("Current Weight Goal: " + (int) (((progress + 4) * 10) * 2.205) + "Lbs");
                     }
-                    sqlLiteManager.updateUserGoal((progress+4)*10, "");
+                    sqlLiteManager.setUserWeightGoal((progress + 4) * 10);
                 }
 
                 @Override
@@ -339,9 +385,9 @@ public class NavigationAdapter extends PagerAdapter {
             btnViewHistory.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent history = new Intent(view.getContext(), HistoryActivity.class );
-                    history.putExtra("Name",AccountName);
-                    history.putExtra("isImperial",true);
+                    Intent history = new Intent(view.getContext(), HistoryActivity.class);
+                    history.putExtra("Name", AccountName);
+                    history.putExtra("isImperial", true);
                     view.getContext().startActivity(history);
                 }
             });
@@ -351,26 +397,111 @@ public class NavigationAdapter extends PagerAdapter {
             this.name.setText(name);
             switchImperial.setChecked(isImperial);
             double userGoal = sqlLiteManager.getUserWeightGoal();
-            textViewSetWeightGoal.setText("Current Weight Goal: " + userGoal + "Kg");
+            if (isImperial) {
+                textViewSetWeightGoal.setText("Current Weight Goal: " + userGoal + "Lbs");
+                txtMeasurementHeader.setText("Measurement System - Imperial");
+                txtChangeToImperialHeader.setText("Change to Metric");
+                textViewWeight.setText("Weight: Lbs");
+                txtViewHeight.setText("Height: Feet");
+            }
+            else {
+                textViewSetWeightGoal.setText("Current Weight Goal: " + userGoal + "Kg");
+                txtMeasurementHeader.setText("Measurement System - Metric");
+                txtChangeToImperialHeader.setText("Change to Imperial");
+                textViewWeight.setText("Weight: Kg");
+                txtViewHeight.setText("Height: Meters");
+            }
             seekBarWeightGoal.setProgress((int)(userGoal/10-4));
             //set all info from db to controls
             editTextName.setText(name);
-            editTextHeight.setText(Double.toString(sqlLiteManager.loadHeight()));
-            editTextWeight.setText(Double.toString(sqlLiteManager.loadWeight()));
-            txtSelectDate.setText(sqlLiteManager.loadBirthdate());
+            editTextHeight.setText(Double.toString(sqlLiteManager.getHeight()));
+            editTextWeight.setText(Double.toString(sqlLiteManager.getRegisteredWeight()));
+            txtSelectDate.setText(sqlLiteManager.getBirthday());
             txtGoalDate.setText(sqlLiteManager.getUserDateGoal());
-            boolean isMale = sqlLiteManager.loadGender();
+            boolean isMale = sqlLiteManager.getGender();
+            if(isMale)
+                txtGender.setText("Male");
+            else
+                txtGender.setText("Female");
             switchGender.setChecked(!isMale);
         }
         container.addView(view);
         return view;
     }
 
+    private void LoadCurrentWeightAndDate() {
+        //loadweight from database
+        int loadWeight = sqlLiteManager.getWeight();//default value 70
+        String date = sqlLiteManager.getDate();
+        weightBar.setProgress(loadWeight * 10);
+        txtCurrentDateSelect.setText(date);
+
+        if (sqlLiteManager.getUserImperial() == false){
+            displayWeight.setText((double)loadWeight + " Kg");
+        }else{
+            displayWeight.setText((int)((loadWeight)*2.205) + " Lbs");
+        }
+    }
+
+    private void ToggleGender() {
+        isMale = sqlLiteManager.getGender();
+        if (isMale == true) {
+            isMale = false;
+            sqlLiteManager.setGender(false);
+            txtGender.setText("Female");
+            switchGender.setChecked(true);
+        } else {
+            isMale = true;
+            sqlLiteManager.setGender(true);
+            txtGender.setText("Male");
+            switchGender.setChecked(false);
+        }
+    }
+
+    private void ToggleMeasurementSystem(DecimalFormat df2) {
+        //isImperial = switchImperial.isChecked();
+        //sqlLiteManager.setUserImperial(isImperial);
+        if (isImperial == false){
+            isImperial = true;
+            sqlLiteManager.setUserImperial(true);
+            switchImperial.setChecked(true);
+            txtMeasurementHeader.setText("Measurement System - Imperial");
+            txtChangeToImperialHeader.setText("Change to Metric");
+            textViewWeight.setText("Weight: Lbs");
+            txtViewHeight.setText("Height: Feet");
+            if (!editTextWeight.getText().toString().isEmpty()) {
+                editTextWeight.setText(Double.toString(Double.parseDouble(df2.format(Double.parseDouble(editTextWeight.getText().toString()) * 2.205))));
+            }
+            if (!editTextHeight.getText().toString().isEmpty()) {
+                editTextHeight.setText(Double.toString(Double.parseDouble(df2.format(Double.parseDouble(editTextHeight.getText().toString()) * 3.28084))));
+            }
+            textViewSetWeightGoal.setText("Current Weight Goal: " + (int)(((seekBarWeightGoal.getProgress()+4)*10)*2.205) + "Lbs");
+
+        }else{
+            isImperial = false;
+            sqlLiteManager.setUserImperial(false);
+             switchImperial.setChecked(false);
+            txtMeasurementHeader.setText("Measurement System - Metric");
+            txtChangeToImperialHeader.setText("Change to Imperial");
+            textViewWeight.setText("Weight: Kg");
+            txtViewHeight.setText("Height: Meters");
+            if (!editTextWeight.getText().toString().isEmpty()) {
+                editTextWeight.setText(Double.toString(Double.parseDouble(df2.format(Double.parseDouble(editTextWeight.getText().toString()) / 2.205))));
+            }
+            if (!editTextHeight.getText().toString().isEmpty()) {
+                editTextHeight.setText(Double.toString(Double.parseDouble(df2.format(Double.parseDouble(editTextHeight.getText().toString()) / 3.28084))));
+            }
+            textViewSetWeightGoal.setText("Current Weight Goal: " + (seekBarWeightGoal.getProgress()+4)*10 + "Kg");
+        }
+        //Load Dashboard with Correct measurement system
+        LoadCurrentWeightAndDate();
+    }
+
     private void calculateBMI(){
         try{
             double bodyMassIndex = 0;
-            double userWeight = sqlLiteManager.loadWeight();//70 default
-            double userHeight = sqlLiteManager.loadHeight();//70 default
+            double userWeight = sqlLiteManager.getWeight();//70 default
+            double userHeight = sqlLiteManager.getHeight();//70 default
 
             bodyMassIndex = userWeight/(userHeight*userHeight);
             bodyMassIndex = (int)(bodyMassIndex*10); //used to get to 2 decimal places
@@ -385,7 +516,7 @@ public class NavigationAdapter extends PagerAdapter {
 
         weightPieLimit.setUsePercentValues(true);
         List<PieEntry> weightPieList = new ArrayList<>();
-        double userWeight = sqlLiteManager.loadWeight();//70 defaults
+        double userWeight = sqlLiteManager.getWeight();//70 defaults
         int getweight = (int)sqlLiteManager.getUserWeightGoal();;
 
         if((int)userWeight< getweight){
