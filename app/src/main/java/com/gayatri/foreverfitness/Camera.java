@@ -119,7 +119,7 @@ public class Camera extends AppCompatActivity {
     private File createPhotoFile(){
         String name = new SimpleDateFormat("yyyymmdd").format(new Date());
 
-       // for it to be accessible by other applications
+        // for it to be accessible by other applications
 
         File storageDir = Environment.getExternalStoragePublicDirectory(
         Environment.DIRECTORY_PICTURES);
@@ -129,10 +129,8 @@ public class Camera extends AppCompatActivity {
 
         }catch (IOException e){ //Exception message
             Log.d("mylog", "Exception :"+ e.toString());    }
-    return photo;
-        }
-
-
+        return photo;
+    }
 }
 
 

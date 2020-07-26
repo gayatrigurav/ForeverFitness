@@ -52,6 +52,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
                 "  user_ID INTEGER ," +
                 "  weightGoal double," +
                 "  dateGoal text," +
+                "  stepGoal INTEGER," +
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
         db.execSQL(GoalTable);
@@ -77,13 +78,34 @@ class SqlLiteManager extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void setDefaultGoals(Double goalWeight, String goalDate){
+    public void setDefaultGoals(Double goalWeight, String goalDate, int stepGoal){
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID", UserId);
         contentValues.put("weightGoal", goalWeight);
         contentValues.put("dateGoal", goalDate);
+        contentValues.put("stepGoal", stepGoal);
         sqLiteDatabase.insert("goalTable",null, contentValues);
+    }
+    public void setUserStepGoal(int stepGoal){
+
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("stepGoal", stepGoal);
+        //contentValues.put("dateGoal", date);
+        sqLiteDatabase.update("goalTable",contentValues,"user_ID = " + UserId,null);
+    }
+    public int getUserStepGoal(){
+
+        int userStepGoal=0;
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select stepGoal from goalTable where (user_ID = " + UserId + ")";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        data.moveToNext();
+        if(data.getCount()!= 0) {
+            userStepGoal = Integer.parseInt(data.getString(0));
+        }
+        return userStepGoal;
     }
 
     public void setUserWeightGoal(double weight){
@@ -113,11 +135,11 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
         double[] userGoal = new double[2];
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select weightGoal from goalTable where (user_ID = " + UserId + ")";
+        String sql = "Select weightGoal, stepGoal from goalTable where (user_ID = " + UserId + ")";
         Cursor data = sqLiteDatabase.rawQuery(sql,null);
         data.moveToNext();
         if(data.getCount()!= 0) {
-            userGoal[0] = 10000.00;//Double.parseDouble(data.getString(0));
+            userGoal[0] = Double.parseDouble(data.getString(1));
             userGoal[1] = Double.parseDouble(data.getString(0));
         }
 
@@ -174,7 +196,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
         else{
             getUserId(Name);
-            setDefaultGoals(goalWeight, goalDate);
+            setDefaultGoals(goalWeight, goalDate, 10000);
             return true;
         }
     }
@@ -439,5 +461,41 @@ class SqlLiteManager extends SQLiteOpenHelper {
             return false;
         }
 
+    }
+
+    public void saveSteps(int steps){
+
+
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_Id",this.UserId);
+        contentValues.put("step",steps);
+        contentValues.put("daytime", currentDate);
+
+
+        long result = sqLiteDatabase.update("milestone",contentValues,"user_Id = " + UserId + " and daytime = '" + currentDate + "'",null);
+        if (result == 0){
+            sqLiteDatabase.insert("milestone",null, contentValues);
+        }
+    }
+    public int loadSteps(){ //Need to add dates
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select step from milestone where (user_ID = " + UserId + " and daytime = '" + currentDate +"')";
+        try{
+            Cursor data = sqLiteDatabase.rawQuery(sql, null);
+            data.moveToNext();
+
+            int test = Integer.parseInt(data.getString(0));
+            return Integer.parseInt(data.getString(0));
+
+
+        }catch (Throwable t) {
+            return  0;
+        }
     }
 }

@@ -9,6 +9,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -42,7 +44,27 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class NavigationAdapter extends PagerAdapter {
+public class NavigationAdapter extends PagerAdapter implements SensorEventListener {
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        steps++;
+        sqlLiteManager.saveSteps(steps);
+
+        try{
+            createPieChart();
+            txtStepsDisplay.setText(steps + " ");
+
+        }catch (Throwable t) {
+            Throwable e = t;
+            String james = "1";
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
     public interface MyCustomObjectListener {
         // need to pass relevant arguments related to the event triggered
         public void onObjectReady(String title);
@@ -71,7 +93,7 @@ public class NavigationAdapter extends PagerAdapter {
     private int steps = 0;
     private LineChart lineChartDiagram;
 
-    private TextView textViewSetTstepGoal, txtWeNeedMoreDays, txtStepsDisplay;
+    private TextView txtWeNeedMoreDays, txtStepsDisplay;
     List<PieEntry> weightPieList;
     PieChart weightPieLimit,stepPie;
 
@@ -91,7 +113,7 @@ public class NavigationAdapter extends PagerAdapter {
     private Button btnDeleteAccount;
     private TextView name, textViewSetWeightGoal, txtChangeToImperialHeader, txtMeasurementHeader, txtSelectDate, txtGoalDate, textViewWeight, txtViewHeight, txtGender;
     private Switch switchImperial, switchGender;
-    private SeekBar seekBarWeightGoal;
+    private SeekBar seekBarWeightGoal, seekBarStepGoal;
     private boolean isImperial;
     private Button btnViewHistory;
 
@@ -100,6 +122,8 @@ public class NavigationAdapter extends PagerAdapter {
     private DatePickerDialog.OnDateSetListener onGoalDateSetListener;
     private String birthday, goalDate;
     private boolean isMale = true;
+    private TextView textViewSetStepGoal;
+
 
     //Database
     private SqlLiteManager sqlLiteManager;
@@ -111,6 +135,10 @@ public class NavigationAdapter extends PagerAdapter {
         sqlLiteManager = new SqlLiteManager(context);
         sqlLiteManager.getUserId(this.AccountName);
         this.isImperial = sqlLiteManager.getUserImperial();
+        steps = sqlLiteManager.loadSteps();
+        sensorManager = (SensorManager) context.getSystemService(context.SENSOR_SERVICE);
+        stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -143,7 +171,7 @@ public class NavigationAdapter extends PagerAdapter {
             lineChartDiagram = view.findViewById(R.id.LineChartDiagram);
 
             //When called, it generated the graph to be displayed to the user
-            createPieChart();                     //Populates the Graph
+            createPieChart();//Populates the Graph
 
             txtStepsDisplay = view.findViewById(R.id.TxtStepsDisplay);
             txtStepsDisplay.setText(steps + " ");
@@ -274,7 +302,28 @@ public class NavigationAdapter extends PagerAdapter {
             txtGoalDate = (TextView) view.findViewById(R.id.TxtGoalDateSelect);
             textViewWeight = (TextView) view.findViewById(R.id.TextViewWeight);
             txtViewHeight = (TextView) view.findViewById(R.id.TextViewHeight);
+            textViewSetStepGoal = view.findViewById(R.id.TextViewSetStepGoal);
+            seekBarStepGoal = (SeekBar) view.findViewById(R.id.SeekBarStepGoal);
+            seekBarStepGoal.setMax(10);
 
+            seekBarStepGoal.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    textViewSetStepGoal.setText("Current Step Goal: " + (progress+5)*1000 + " steps");
+
+                    sqlLiteManager.setUserStepGoal((progress+5)*1000);
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
 
             editTextHeight.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -468,6 +517,8 @@ public class NavigationAdapter extends PagerAdapter {
                 txtViewHeight.setText("Height: Meters");
             }
             seekBarWeightGoal.setProgress((int)(userGoal/10-4));
+            int stepGoal = sqlLiteManager.getUserStepGoal();
+            textViewSetStepGoal.setText("Current Step Goal: " + stepGoal + " steps");
             //set all info from db to controls
             editTextName.setText(name);
             editTextHeight.setText(Double.toString(sqlLiteManager.getHeight()));
