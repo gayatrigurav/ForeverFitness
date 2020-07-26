@@ -1,8 +1,11 @@
 package com.gayatri.foreverfitness;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.Button;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,25 +15,30 @@ public class MainActivity extends AppCompatActivity {
 
     private String Name;
     private boolean isImperial;
-    private NavigationAdapter navigationAdapter;
     private ViewPager Pager = null;
+    private NavigationAdapter navigationAdapter;
+    private Button btnAccept, btnCancel;
     private BottomNavigationView navView;
+    private Dialog dialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        dialog = new Dialog(MainActivity.this);
 
+        setContentView(R.layout.activity_main);
         Pager = (ViewPager) findViewById(R.id.viewPager);
 
         navView = (BottomNavigationView) findViewById(R.id.nav_view);
         Intent intent = getIntent();
         this.Name = getIntent().getStringExtra("Name");
+
         this.isImperial = getIntent().getBooleanExtra("IsImperial",false);
         navigationAdapter = new NavigationAdapter(this, this.Name, this.isImperial);
 
         Pager.setAdapter(navigationAdapter);
 
-        Pager.setCurrentItem(2);
+        Pager.setCurrentItem(3);
 
         navView.setSelectedItemId(R.id.navigation_settings);
 
@@ -45,7 +53,9 @@ public class MainActivity extends AppCompatActivity {
                     navView.setSelectedItemId(R.id.navigation_home);
                 }else if (i == 1){
                     navView.setSelectedItemId(R.id.navigation_dashboard);
-                }else if(i == 2){
+                }else if (i == 2){
+                    navView.setSelectedItemId(R.id.cameraDisplay);
+                }else if(i == 3){
                     navView.setSelectedItemId(R.id.navigation_settings);
                 }
             }
@@ -65,8 +75,11 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.navigation_dashboard:
                         Pager.setCurrentItem(1);
                         break;
-                    case R.id.navigation_settings:
+                    case R.id.cameraDisplay:
                         Pager.setCurrentItem(2);
+                        break;
+                    case R.id.navigation_settings:
+                        Pager.setCurrentItem(3);
                         break;
                 }
                 return true;
@@ -82,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                     SqlLiteManager sql = new SqlLiteManager(MainActivity.this);
                     sql.getUserId(MainActivity.this.Name);
                     sql.deleteUser();
+                    sql.close();
                     finish();
                     startActivity(WelcomePage);
                 }

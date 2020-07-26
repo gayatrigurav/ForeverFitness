@@ -59,8 +59,10 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
         String milestone = "create table IF NOT EXISTS milestone(" +
                 "  milestone_ID INTEGER PRIMARY KEY autoincrement," +
+                "  step INTEGER,"+
                 "  weight double," +
                 "  user_ID INTEGER ," +
+                "  picture blob," +
                 "  daytime text,"+
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
@@ -105,6 +107,21 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
 
         return userWeightGoal;
+    }
+
+    public double[] getUserGoal(){
+
+        double[] userGoal = new double[2];
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select weightGoal from goalTable where (user_ID = " + UserId + ")";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        data.moveToNext();
+        if(data.getCount()!= 0) {
+            userGoal[0] = 10000.00;//Double.parseDouble(data.getString(0));
+            userGoal[1] = Double.parseDouble(data.getString(0));
+        }
+
+        return userGoal;
     }
 
     public void setUserDateGoal(String goalDate){
@@ -268,7 +285,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     public int getWeight(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select weight from milestone where (user_ID = " + UserId + " ORDER BY daytime DESC)";
+        String sql = "Select weight from milestone where user_ID = " + UserId + " ORDER BY daytime DESC";
         try{
             Cursor data = sqLiteDatabase.rawQuery(sql, null);
             data.moveToNext();
@@ -372,8 +389,55 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     public Cursor getUserHistory(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select * from milestone where user_ID = " + UserId + " and weight > 0.0 and daytime != \"\" ORDER BY milestone_ID DESC";
+        String sql = "Select * from milestone where user_ID = " + UserId + " ORDER BY milestone_ID DESC";
         Cursor data = sqLiteDatabase.rawQuery(sql,null);
         return data;
+        //and weight > 0.0 and daytime != ""
+    }
+
+    public Cursor getImage(){
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date());
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select picture from milestone where (user_ID = " + UserId + " and daytime = '" + currentDate + "')";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        return data;
+    }
+
+    public Boolean saveImage(String imagePath) {
+
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        try{
+            FileInputStream fs = new FileInputStream(imagePath); //gets the location of the photo
+            byte[] imgbyte = new byte[fs.available()];
+            fs.read(imgbyte);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(imgbyte, 0, imgbyte.length);
+
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(
+                    bitmap, 768, 1024, false); //makes the file smaller
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream(); //Convert BitsFactory to Bytes
+            resizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            imgbyte = stream.toByteArray();
+
+
+
+            ContentValues contentValues = new ContentValues();
+
+            contentValues.put("picture",imgbyte);
+            try{
+                sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId  +" and daytime = '" + currentDate + "'",null);
+            }catch (Throwable t) {
+                sqLiteDatabase.insert("milestone",null, contentValues);
+            }
+            fs.close();
+            return true;
+        }catch (Throwable t){
+            return false;
+        }
+
     }
 }

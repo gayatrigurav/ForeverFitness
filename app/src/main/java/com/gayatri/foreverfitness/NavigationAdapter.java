@@ -3,8 +3,13 @@ package com.gayatri.foreverfitness;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -13,17 +18,24 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
+
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -43,7 +55,8 @@ public class NavigationAdapter extends PagerAdapter {
     public String[] title = {
             "0oo",
             "o0o",
-            "oo0"
+            "oo0",
+            "o00"
     };
     Context context;
     LayoutInflater inflater;
@@ -52,18 +65,30 @@ public class NavigationAdapter extends PagerAdapter {
     private int position;
     View view;
 
+    //Home Stat Page
+    private SensorManager sensorManager;
+    private Sensor stepSensor;
+    private int steps = 0;
+    private LineChart lineChartDiagram;
+
+    private TextView textViewSetTstepGoal, txtWeNeedMoreDays, txtStepsDisplay;
+    List<PieEntry> weightPieList;
+    PieChart weightPieLimit,stepPie;
+
     //Dashboard Page
     private SeekBar weightBar;
     private TextView displayWeight, txtViewBMI;
-    PieChart weightPieLimit;
-    private Button btnSubmitWight;
-    List<PieEntry> weightPieList;
+    private Button btnSubmitWeight;
     private TextView txtCurrentDateSelect;
     private DatePickerDialog.OnDateSetListener onCurrentDateSetListener;
     private String currentDate;
 
+    //Camera page
+    private Button btnTakePhoto;
+    private ImageView imgCurrentPhoto;
+
     //Settings Page
-    private Button btnDeleteAcount;
+    private Button btnDeleteAccount;
     private TextView name, textViewSetWeightGoal, txtChangeToImperialHeader, txtMeasurementHeader, txtSelectDate, txtGoalDate, textViewWeight, txtViewHeight, txtGender;
     private Switch switchImperial, switchGender;
     private SeekBar seekBarWeightGoal;
@@ -108,16 +133,29 @@ public class NavigationAdapter extends PagerAdapter {
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
         inflater = (LayoutInflater)context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
         this.position = position;
-        if (position % 3 == 0) {
+        if (position == 0) {
             //o position page
             view = inflater.inflate(R.layout.fragment_home, container, false);
-        }else if (position % 3 == 1) {
+            LinearLayout layoutslide = view.findViewById(R.id.slidelinearlayout);
+            LinearLayout pielayout = view.findViewById(R.id.PieLayout);
+            stepPie = view.findViewById(R.id.StepPie);
+            txtWeNeedMoreDays = view.findViewById(R.id.TxtWeNeedMoreDays);
+            lineChartDiagram = view.findViewById(R.id.LineChartDiagram);
+
+            //When called, it generated the graph to be displayed to the user
+            createPieChart();                     //Populates the Graph
+
+            txtStepsDisplay = view.findViewById(R.id.TxtStepsDisplay);
+            txtStepsDisplay.setText(steps + " ");
+
+            createLineGraph();
+        }else if (position == 1) {
             //Dashboard
             view = inflater.inflate(R.layout.fragment_dashboard, container, false);
             weightBar = (SeekBar) view.findViewById(R.id.seekBar);
             displayWeight = (TextView) view.findViewById(R.id.txtCalories);
             weightPieLimit = view.findViewById(R.id.WeightLimitPie);
-            btnSubmitWight = view.findViewById(R.id.BtnSubmitWight);
+            btnSubmitWeight = view.findViewById(R.id.BtnSubmitWight);
             txtViewBMI = view.findViewById(R.id.TxtViewBMI);
             txtCurrentDateSelect = view.findViewById(R.id.TxtCurrentDateSelect);
 
@@ -175,7 +213,7 @@ public class NavigationAdapter extends PagerAdapter {
 
             createPieChartWeight();
             calculateBMI();
-            btnSubmitWight.setOnClickListener(new View.OnClickListener() {
+            btnSubmitWeight.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     double weightSet = weightBar.getProgress()/10;
@@ -185,10 +223,39 @@ public class NavigationAdapter extends PagerAdapter {
                 }
             });
 
-        }else if (position % 3 == 2) {
-            //2 position page Settings
+        }else if (position == 2) {
+            //Camera Page
+            //Start Camera Page
+            view = inflater.inflate(R.layout.activity_takephoto, container, false);
+            btnTakePhoto = view.findViewById(R.id.BtnTakePhoto);
+            btnViewHistory = view.findViewById(R.id.BtnViewHistory);
+            imgCurrentPhoto = view.findViewById(R.id.ImgCurrentPhoto);
+            btnTakePhoto.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent cameraPage = new Intent(view.getContext(), Camera.class);
+                    cameraPage.putExtra("Account",AccountName);
+                    view.getContext().startActivity(cameraPage);
+                    getTodayPhoto();
+                }
+            });
+
+            btnViewHistory.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent history = new Intent(view.getContext(), HistoryActivity.class);
+                    history.putExtra("Account",AccountName);
+                    history.putExtra("isImperial",sqlLiteManager.getUserImperial());
+                    view.getContext().startActivity(history);
+                }
+            });
+
+            getTodayPhoto();
+
+        }else if (position == 3) {
+            //3 position page Settings
             view = inflater.inflate(R.layout.fragment_settings, container, false);
-            btnDeleteAcount = view.findViewById(R.id.BtnDeleteAccount);
+            btnDeleteAccount = view.findViewById(R.id.BtnDeleteAccount);
             name = view.findViewById(R.id.Name);
             switchImperial = view.findViewById(R.id.SwitchImperial);
 
@@ -349,7 +416,7 @@ public class NavigationAdapter extends PagerAdapter {
                 }
             });
 
-            btnDeleteAcount.setOnClickListener(new View.OnClickListener() {
+            btnDeleteAccount.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     listener.onObjectReady("btnDeleteAccount");
@@ -379,17 +446,7 @@ public class NavigationAdapter extends PagerAdapter {
                 }
             });
 
-            btnViewHistory = view.findViewById(R.id.BtnViewHistory);
 
-            btnViewHistory.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent history = new Intent(view.getContext(), HistoryActivity.class);
-                    history.putExtra("Name", AccountName);
-                    history.putExtra("isImperial", true);
-                    view.getContext().startActivity(history);
-                }
-            });
 
             //Get User Details
             String name = sqlLiteManager.getName();
@@ -516,33 +573,33 @@ public class NavigationAdapter extends PagerAdapter {
         weightPieLimit.setUsePercentValues(true);
         List<PieEntry> weightPieList = new ArrayList<>();
         double userWeight = sqlLiteManager.getWeight();//70 defaults
-        int getweight = (int)sqlLiteManager.getUserWeightGoal();;
+        int getWeight = (int)sqlLiteManager.getUserWeightGoal();;
 
-        if((int)userWeight< getweight){
+        if((int)userWeight< getWeight){
             if (sqlLiteManager.getUserImperial() == false) {
                 weightPieList.add(new PieEntry((int) userWeight, (int) userWeight + " KG"));
-                weightPieList.add(new PieEntry(getweight - (int) userWeight, getweight - (int) userWeight + "KG"));
+                weightPieList.add(new PieEntry(getWeight - (int) userWeight, getWeight - (int) userWeight + "KG"));
             }else{
 
                 weightPieList.add(new PieEntry((int) userWeight, (int) (userWeight * 2.205) + " Lbs"));
-                weightPieList.add(new PieEntry(getweight - (int) userWeight, (int) (getweight*2.205) - (int) (userWeight * 2.205) + " Lbs"));
+                weightPieList.add(new PieEntry(getWeight - (int) userWeight, (int) (getWeight*2.205) - (int) (userWeight * 2.205) + " Lbs"));
             }
 
         }else{
 
             if (sqlLiteManager.getUserImperial() == false) {
                 weightPieList.add(new PieEntry((int) userWeight,(int)userWeight + " KG"));
-                weightPieList.add(new PieEntry(((getweight-(int)userWeight)*-1),(int)((getweight-userWeight)*-1)+ " KG"));
+                weightPieList.add(new PieEntry(((getWeight-(int)userWeight)*-1),(int)((getWeight-userWeight)*-1)+ " KG"));
 
             }else{
 
                 weightPieList.add(new PieEntry((int) userWeight,(int)(userWeight*2.205) + " Lbs"));
-                weightPieList.add(new PieEntry(((getweight-(int)userWeight)*-1),(int)(((getweight-userWeight)*-1)*2.205)+ " Lbs"));
+                weightPieList.add(new PieEntry(((getWeight-(int)userWeight)*-1),(int)(((getWeight-userWeight)*-1)*2.205)+ " Lbs"));
             }
 
         }
         PieDataSet weightPieDataSet;
-        if((int)userWeight< getweight){
+        if((int)userWeight< getWeight){
             weightPieDataSet = new PieDataSet(weightPieList,"Weight to gain");
         }else{
             weightPieDataSet = new PieDataSet(weightPieList,"Weight to Lose");
@@ -557,11 +614,136 @@ public class NavigationAdapter extends PagerAdapter {
         PieData caloriePieData = new PieData(weightPieDataSet);
         weightPieLimit.setData(caloriePieData);
         weightPieLimit.setNoDataText("");
-        //Used to set the discription for the Pie chart
+        //Used to set the description for the Pie chart
         Description description = new Description();
         description.setText("");
         weightPieLimit.setDescription(description);
 
+    }
+
+    private void createPieChart(){
+
+        stepPie.setUsePercentValues(true);
+        List<PieEntry> stepPieList = new ArrayList<>();
+        double[] setGoal = sqlLiteManager.getUserGoal();
+        int toGo = (int)(setGoal[0]);
+        String pieData = String.valueOf(steps);
+        String toGoSteps = String.valueOf(toGo-steps);
+        stepPieList.add(new PieEntry(steps,pieData)); //What the user has done
+        stepPieList.add(new PieEntry(toGo-steps,toGoSteps)); //What the user still needs to do
+
+        PieDataSet stepPieDataSet = new PieDataSet(stepPieList,"Steps To Reach");
+        stepPieDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
+        stepPieDataSet.setDrawValues(false);
+        stepPie.setHoleRadius(30f);
+        stepPie.setTransparentCircleRadius(25f);
+
+        PieData stepPieData = new PieData(stepPieDataSet);
+        stepPie.setData(stepPieData);
+        stepPie.setNoDataText("");
+        //Used to set the discription for the Pie chart
+        Description description = new Description();
+        description.setText("");
+        stepPie.setDescription(description);
+        stepPie.invalidate();
+    }
+
+    private void createLineGraph(){
+
+        ArrayList<Entry>  yAxesstepHistory = new ArrayList<>();
+        ArrayList<Entry>  yAxesweightHistory = new ArrayList<>();
+        ArrayList<ILineDataSet> multipleData = new ArrayList<>();
+        Cursor data = sqlLiteManager.getUserHistory();
+
+        if(data.getCount() != 0){
+            for (int i = 0; i<data.getCount(); i++) {
+                data.moveToNext();
+
+                float stepdata;
+                float weightdata;
+
+                if (data.getString(2) != null) {
+
+                    if (isImperial == false) { //convert the weight to Lbs or KG
+                        weightdata = Float.parseFloat(data.getString(2));
+                    } else {
+                        weightdata = (int) (Integer.parseInt(data.getString(2)) * 2.205);
+                    }
+                    yAxesweightHistory.add(new Entry(i, weightdata));
+
+
+                }
+                if (data.getString(1) != null) {
+                    stepdata = Float.parseFloat(data.getString(1));
+                    yAxesstepHistory.add(new Entry(i, stepdata));
+
+
+                }
+            }
+
+            //if(data.getString(2) != null){
+            if(yAxesweightHistory.size() > 1){
+                LineDataSet dataSetWeightHistory;
+                if (isImperial == false){ //convert the weight to Lbs or KG
+                    dataSetWeightHistory = new LineDataSet(yAxesweightHistory, "Weight Kg");
+                }else{
+                    dataSetWeightHistory = new LineDataSet(yAxesweightHistory, "Weight Lbs");
+                }
+                dataSetWeightHistory.setDrawValues(false);
+                dataSetWeightHistory.setDrawCircles(false);
+                dataSetWeightHistory.setColor(Color.GREEN);
+                dataSetWeightHistory.setLineWidth(5);
+                multipleData.add(dataSetWeightHistory);
+
+            }
+
+            if(data.getString(1) != null){
+                LineDataSet dataSetStepHistory = new LineDataSet(yAxesstepHistory, "Steps");
+                dataSetStepHistory.setDrawValues(false);
+                dataSetStepHistory.setDrawCircles(false);
+                dataSetStepHistory.setColor(Color.RED);
+                dataSetStepHistory.setLineWidth(5);
+                multipleData.add(dataSetStepHistory);
+
+            }
+        }
+
+        lineChartDiagram.setData(new LineData(multipleData));
+
+        Description description = new Description();
+        if(data.getCount() < 2){
+            txtWeNeedMoreDays.setText("We Need More Days to create this Graph");
+            txtWeNeedMoreDays.setVisibility(View.VISIBLE);
+
+        }else{
+            txtWeNeedMoreDays.setVisibility(View.GONE);
+        }
+
+        description.setText("");
+        lineChartDiagram.setDescription(description);
+
+
+
+        //lineChartDiagram.setVisibleXRangeMaximum(65f);
+        lineChartDiagram.animateY(1000);
+    }
+
+    private void getTodayPhoto(){
+        Cursor img = sqlLiteManager.getImage();
+
+        try{
+            if(img.getCount() != -1) {
+                img.moveToNext();
+                byte[] byteArray = img.getBlob(0); //gets the Bytes that the database holds
+                if(byteArray != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length); //Converts the Bytes to BitMap
+
+                    imgCurrentPhoto.setImageBitmap(bitmap);
+                }
+            }
+        }catch (Exception e){
+
+        }
     }
 
     public int getCurrentPageIndex(){
