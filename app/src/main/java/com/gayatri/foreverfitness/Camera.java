@@ -121,8 +121,7 @@ public class Camera extends AppCompatActivity {
 
         // for it to be accessible by other applications
 
-        File storageDir = Environment.getExternalStoragePublicDirectory(
-        Environment.DIRECTORY_PICTURES);
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         File photo = null;
         try{
             photo = File.createTempFile(name,".jpg",storageDir);
