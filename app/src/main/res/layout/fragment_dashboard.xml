@@ -76,7 +76,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-
             android:orientation="vertical">
 
             <TextView
@@ -96,6 +95,20 @@
                 tools:text="Tap to select " />
 
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your Photo Today"
+            android:textSize="20sp"
+            tools:text="Your Photo Today" />
+
+        <ImageView
+            android:id="@+id/ImgDashboardPhoto"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            tools:srcCompat="@tools:sample/avatars[0]" />
 
         <Button
             android:id="@+id/BtnSubmitWight"
@@ -138,7 +151,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="BMI INDEX:- Body mass index is the measurement of body fat based on height and weight. If your BMI is between 18.5 and 24.9, you're in the healthy weight range."
-            android:textSize="20sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 
 </LinearLayout>

@@ -307,14 +307,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/TxtGoaldateHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Goal Date"
+                    android:text="Set Goal Date"
                     android:textSize="20sp" />
 
                 <TextView
@@ -326,13 +325,31 @@
                     tools:text="Tap to select " />
 
             </LinearLayout>
+            <LinearLayout
+                android:id="@+id/LinearLayoutSteps"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/TextViewSetStepGoal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Set Step Goal"
+                    android:textSize="20sp" />
+
+                <SeekBar
+                    android:id="@+id/SeekBarStepGoal"
+                    style="@android:style/Widget.DeviceDefault.Light.SeekBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="15"
+                    android:progress="5" />
+
+            </LinearLayout>
         </LinearLayout>
-        <Button
-            android:id="@+id/BtnViewHistory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="View History"
-            tools:text="View History" />
     </LinearLayout>
 
 </LinearLayout>

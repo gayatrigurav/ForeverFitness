@@ -219,6 +219,7 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
         Intent MainActivity = new Intent(this, com.gayatri.foreverfitness.MainActivity.class);
         MainActivity.putExtra("Name",this.name);
         MainActivity.putExtra("IsImperial",this.isImperial);
+        sqlLiteManager.close();
         finish();
         startActivity(MainActivity);
     }

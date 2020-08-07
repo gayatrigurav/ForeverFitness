@@ -8,8 +8,14 @@
     android:orientation="vertical"
     android:background="#3903A9F4">
 
+    <TextView android:id="@+id/milestoneId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="hidden value"
+        android:visibility="gone"/>
+
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/TxtCurrentDateHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Date"
@@ -20,8 +26,21 @@
         android:id="@+id/TxtDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Insert Date"
-        tools:text="Insert Date" />
+        android:text="Date"
+        tools:text="Date" />
+
+    <TextView
+        android:id="@+id/TxtStepsHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Steps"
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/TxtSteps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Steps" />
 
     <TextView
         android:id="@+id/TxtWightHeader"
@@ -35,9 +54,23 @@
         android:id="@+id/TxtWeight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Insert Weight Here"
-        tools:text="Insert Weight Here" />
+        android:text="Weight"
+        tools:text="Weight" />
 
+
+
+    <ImageView
+        android:id="@+id/ImgUser"
+        android:layout_width="189dp"
+        android:layout_height="169dp"
+        app:srcCompat="@drawable/login_character" />
+    <Button
+        android:id="@+id/BtnDeleteHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="18dp"
+        android:layout_marginRight="15dp"
+        android:text="Delete This Entry" />
 
     <View
         android:layout_width="match_parent"

@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -52,6 +54,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
                 "  user_ID INTEGER ," +
                 "  weightGoal double," +
                 "  dateGoal text," +
+                "  stepGoal INTEGER," +
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
         db.execSQL(GoalTable);
@@ -59,8 +62,10 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
         String milestone = "create table IF NOT EXISTS milestone(" +
                 "  milestone_ID INTEGER PRIMARY KEY autoincrement," +
+                "  step INTEGER,"+
                 "  weight double," +
                 "  user_ID INTEGER ," +
+                "  picture blob," +
                 "  daytime text,"+
                 "   FOREIGN KEY (user_ID) REFERENCES userInfo(user_ID)" +
                 ");";
@@ -75,13 +80,34 @@ class SqlLiteManager extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void setDefaultGoals(Double goalWeight, String goalDate){
+    public void setDefaultGoals(Double goalWeight, String goalDate, int stepGoal){
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID", UserId);
         contentValues.put("weightGoal", goalWeight);
         contentValues.put("dateGoal", goalDate);
+        contentValues.put("stepGoal", stepGoal);
         sqLiteDatabase.insert("goalTable",null, contentValues);
+    }
+    public void setUserStepGoal(int stepGoal){
+
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("stepGoal", stepGoal);
+        //contentValues.put("dateGoal", date);
+        sqLiteDatabase.update("goalTable",contentValues,"user_ID = " + UserId,null);
+    }
+    public int getUserStepGoal(){
+
+        int userStepGoal=0;
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select stepGoal from goalTable where (user_ID = " + UserId + ")";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        data.moveToNext();
+        if(data.getCount()!= 0) {
+            userStepGoal = Integer.parseInt(data.getString(0));
+        }
+        return userStepGoal;
     }
 
     public void setUserWeightGoal(double weight){
@@ -105,6 +131,21 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
 
         return userWeightGoal;
+    }
+
+    public double[] getUserGoal(){
+
+        double[] userGoal = new double[2];
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select weightGoal, stepGoal from goalTable where (user_ID = " + UserId + ")";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        data.moveToNext();
+        if(data.getCount()!= 0) {
+            userGoal[0] = Double.parseDouble(data.getString(1));
+            userGoal[1] = Double.parseDouble(data.getString(0));
+        }
+
+        return userGoal;
     }
 
     public void setUserDateGoal(String goalDate){
@@ -157,7 +198,10 @@ class SqlLiteManager extends SQLiteOpenHelper {
         }
         else{
             getUserId(Name);
-            setDefaultGoals(goalWeight, goalDate);
+            setDefaultGoals(goalWeight, goalDate, 10000);
+            SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+            String currentDate = simpleDate.format(new Date());
+            saveWeightWithDateDefault(weight,currentDate);
             return true;
         }
     }
@@ -202,7 +246,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
         data.moveToNext();
 
         UserId = Double.parseDouble(data.getString(0));
-        setDate(); //checks if the date is new, then sets new row
+        //setDate(); //checks if the date is new, then sets new row
     }
 
     public void setUserImperial(boolean isImperial){
@@ -252,13 +296,33 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     }
 
+    public void saveWeightWithDateDefault(double weight, String currentDateTime){
 
-    public void saveWeightAndDate(double weight, String currentDateTime){
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID",this.UserId);
         contentValues.put("weight",weight);
         contentValues.put("daytime", currentDateTime);
+
+        sqLiteDatabase.insert("milestone",null, contentValues);
+    }
+
+    public void saveWeightWithDateAndImage(double weight, String currentDateTime, Bitmap image){
+
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(
+                image, 768, 1024, false); //makes the file smaller
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(); //Convert BitsFactory to Bytes
+        resizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        byte[] imageByte = stream.toByteArray();
+
+
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_ID",this.UserId);
+        contentValues.put("weight",weight);
+        contentValues.put("daytime", currentDateTime);
+        contentValues.put("picture",imageByte);
 
         long result = sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId + " and daytime = '" + currentDateTime + "'",null);
         if (result == 0){
@@ -268,7 +332,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     public int getWeight(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select weight from milestone where (user_ID = " + UserId + " ORDER BY daytime DESC)";
+        String sql = "Select weight from milestone where user_ID = " + UserId + " ORDER BY daytime DESC";
         try{
             Cursor data = sqLiteDatabase.rawQuery(sql, null);
             data.moveToNext();
@@ -375,5 +439,114 @@ class SqlLiteManager extends SQLiteOpenHelper {
         String sql = "Select * from milestone where user_ID = " + UserId + " and weight > 0.0 and daytime != \"\" ORDER BY milestone_ID DESC";
         Cursor data = sqLiteDatabase.rawQuery(sql,null);
         return data;
+        //and weight > 0.0 and daytime != ""
+    }
+
+    public void deleteUserHistoryEntry(int milestoneId){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        int result;
+        //String sql = "Delete  from milestone where milestone_ID = " + milestoneId ;
+        try {
+            result = sqLiteDatabase.delete("milestone", "milestone_ID=?",new String[]{Integer.toString(milestoneId)});
+        }catch (Exception e)
+        {
+            String msg = e.getMessage();
+        }
+
+    }
+
+    public void deleteUserHistory(){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        //String sql = "delete from milestone";
+        int result = sqLiteDatabase.delete("milestone", null, null);
+    }
+
+    public Cursor getImage(){
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date());
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select picture from milestone where (user_ID = " + UserId + " and daytime = '" + currentDate + "')";
+        Cursor data = sqLiteDatabase.rawQuery(sql,null);
+        return data;
+    }
+
+    public Boolean saveImage(String imagePath) {
+
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        try{
+            FileInputStream fs = new FileInputStream(imagePath); //gets the location of the photo
+            byte[] imgbyte = new byte[fs.available()];
+            fs.read(imgbyte);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(imgbyte, 0, imgbyte.length);
+
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(
+                    bitmap, 768, 1024, false); //makes the file smaller
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream(); //Convert BitsFactory to Bytes
+            resizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            imgbyte = stream.toByteArray();
+
+
+
+            ContentValues contentValues = new ContentValues();
+
+            contentValues.put("picture",imgbyte);
+
+
+            //int result = 0;
+            long iResult=0;
+
+            long result = sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId + " and daytime = '" + currentDate + "'",null);
+            if (result == 0){
+                contentValues.put("user_ID",this.UserId);
+                contentValues.put("daytime",currentDate);
+                sqLiteDatabase.insert("milestone",null, contentValues);
+            }
+
+            fs.close();
+            return true;
+        }catch (Throwable t){
+            return false;
+        }
+
+    }
+
+    public void saveSteps(int steps){
+
+
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_Id",this.UserId);
+        contentValues.put("step",steps);
+        contentValues.put("daytime", currentDate);
+
+
+        long result = sqLiteDatabase.update("milestone",contentValues,"user_Id = " + UserId + " and daytime = '" + currentDate + "'",null);
+        if (result == 0){
+            sqLiteDatabase.insert("milestone",null, contentValues);
+        }
+    }
+    public int loadSteps(){ //Need to add dates
+        SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+        String currentDate = simpleDate.format(new Date()); //Gets the current Date to check if data exists
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        String sql = "Select step from milestone where (user_ID = " + UserId + " and daytime = '" + currentDate +"')";
+        try{
+            Cursor data = sqLiteDatabase.rawQuery(sql, null);
+            data.moveToNext();
+
+            int test = Integer.parseInt(data.getString(0));
+            return Integer.parseInt(data.getString(0));
+
+
+        }catch (Throwable t) {
+            return  0;
+        }
     }
 }
