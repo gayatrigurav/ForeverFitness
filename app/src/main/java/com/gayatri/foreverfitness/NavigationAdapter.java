@@ -211,7 +211,8 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
                 @Override
                 public void onDateSet(DatePicker datePicker, int year, int month, int day) {
                     month = month + 1;
-                    currentDate = day+"-"+month+"-"+year;
+                    currentDate = (day < 10 ? "0" : "") + day +"-"+ (month < 10 ? "0" : "") + month +"-"+year;
+                    txtCurrentDateSelect.setTextColor(Color.parseColor("#000000"));
                     txtCurrentDateSelect.setText(currentDate);
                 }
             };
@@ -244,10 +245,17 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
             btnSubmitWeight.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    double weightSet = weightBar.getProgress()/10;
-                    sqlLiteManager.saveWeightAndDate(weightSet, currentDate);
-                    createPieChartWeight();
-                    calculateBMI();
+                    if(currentDate!=null) {
+                        double weightSet = weightBar.getProgress() / 10;
+                        sqlLiteManager.saveWeightAndDate(weightSet, currentDate);
+                        createPieChartWeight();
+                        calculateBMI();
+                    }
+                    else
+                    {
+                        txtCurrentDateSelect.setText("Tap to select");
+                        txtCurrentDateSelect.setTextColor(Color.parseColor("#FF0000"));
+                    }
                 }
             });
 
@@ -537,16 +545,24 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
     }
 
     private void LoadCurrentWeightAndDate() {
-        //loadweight from database
+        //load Weight from database
         int loadWeight = sqlLiteManager.getWeight();//default value 70
         String date = sqlLiteManager.getDate();
-        weightBar.setProgress(loadWeight * 10);
-        txtCurrentDateSelect.setText(date);
+        if(weightBar!=null)
+            weightBar.setProgress(loadWeight * 10);
+        if(txtCurrentDateSelect!=null) {
+            if(date.isEmpty())
+                txtCurrentDateSelect.setText("Tap to select");
+            else
+                txtCurrentDateSelect.setText(date);
+        }
 
-        if (sqlLiteManager.getUserImperial() == false){
-            displayWeight.setText((double)loadWeight + " Kg");
-        }else{
-            displayWeight.setText((int)((loadWeight)*2.205) + " Lbs");
+        if(displayWeight!=null) {
+            if (sqlLiteManager.getUserImperial() == false) {
+                displayWeight.setText((double) loadWeight + " Kg");
+            } else {
+                displayWeight.setText((int) ((loadWeight) * 2.205) + " Lbs");
+            }
         }
     }
 
@@ -607,8 +623,14 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
     private void calculateBMI(){
         try{
             double bodyMassIndex = 0;
+            //weight will ve in kgs always
             double userWeight = sqlLiteManager.getWeight();//70 default
+            //height will be depends on imperial or metrics
+
             double userHeight = sqlLiteManager.getHeight();//70 default
+            if(isImperial)
+                userHeight = userHeight / 3.28084;
+
 
             bodyMassIndex = userWeight/(userHeight*userHeight);
             bodyMassIndex = (int)(bodyMassIndex*10); //used to get to 2 decimal places

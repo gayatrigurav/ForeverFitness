@@ -241,7 +241,7 @@ class SqlLiteManager extends SQLiteOpenHelper {
         data.moveToNext();
 
         UserId = Double.parseDouble(data.getString(0));
-        setDate(); //checks if the date is new, then sets new row
+        //setDate(); //checks if the date is new, then sets new row
     }
 
     public void setUserImperial(boolean isImperial){
@@ -411,10 +411,29 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     public Cursor getUserHistory(){
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        String sql = "Select * from milestone where user_ID = " + UserId + " ORDER BY milestone_ID DESC";
+        String sql = "Select * from milestone where user_ID = " + UserId + " and weight > 0.0 and daytime != \"\" ORDER BY milestone_ID DESC";
         Cursor data = sqLiteDatabase.rawQuery(sql,null);
         return data;
         //and weight > 0.0 and daytime != ""
+    }
+
+    public void deleteUserHistoryEntry(int milestoneId){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        int result;
+        //String sql = "Delete  from milestone where milestone_ID = " + milestoneId ;
+        try {
+            result = sqLiteDatabase.delete("milestone", "milestone_ID=?",new String[]{Integer.toString(milestoneId)});
+        }catch (Exception e)
+        {
+            String msg = e.getMessage();
+        }
+
+    }
+
+    public void deleteUserHistory(){
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        //String sql = "delete from milestone";
+        int result = sqLiteDatabase.delete("milestone", null, null);
     }
 
     public Cursor getImage(){

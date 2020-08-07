@@ -31,6 +31,14 @@
             android:textSize="30dp"
             tools:text="History" />
 
+        <Button
+            android:id="@+id/BtnDeleteAllHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="15dp"
+            android:text="Delete All Entries" />
+
 
         <ScrollView
             android:layout_width="match_parent"
@@ -43,7 +51,6 @@
                 android:orientation="vertical" />
 
         </ScrollView>
-
     </LinearLayout>
 
     <LinearLayout
@@ -67,6 +74,6 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="18dp"
             android:layout_marginRight="15dp"
-            android:text="Back to Settings" />
+            android:text="Back" />
     </LinearLayout>
 </RelativeLayout>
