@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -292,12 +294,22 @@ class SqlLiteManager extends SQLiteOpenHelper {
     }
 
 
-    public void saveWeightAndDate(double weight, String currentDateTime){
+    public void saveWeightWithDateAndImage(double weight, String currentDateTime, Bitmap image){
+
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(
+                image, 768, 1024, false); //makes the file smaller
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(); //Convert BitsFactory to Bytes
+        resizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        byte[] imageByte = stream.toByteArray();
+
+
         SQLiteDatabase sqLiteDatabase = getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("user_ID",this.UserId);
         contentValues.put("weight",weight);
         contentValues.put("daytime", currentDateTime);
+        contentValues.put("picture",imageByte);
 
         long result = sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId + " and daytime = '" + currentDateTime + "'",null);
         if (result == 0){
@@ -469,11 +481,18 @@ class SqlLiteManager extends SQLiteOpenHelper {
             ContentValues contentValues = new ContentValues();
 
             contentValues.put("picture",imgbyte);
-            try{
-                sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId  +" and daytime = '" + currentDate + "'",null);
-            }catch (Throwable t) {
+
+
+            //int result = 0;
+            long iResult=0;
+
+            long result = sqLiteDatabase.update("milestone",contentValues,"user_ID = " + UserId + " and daytime = '" + currentDate + "'",null);
+            if (result == 0){
+                contentValues.put("user_ID",this.UserId);
+                contentValues.put("daytime",currentDate);
                 sqLiteDatabase.insert("milestone",null, contentValues);
             }
+
             fs.close();
             return true;
         }catch (Throwable t){

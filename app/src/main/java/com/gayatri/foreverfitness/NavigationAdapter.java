@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -25,6 +26,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
 
@@ -104,6 +107,7 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
     private TextView txtCurrentDateSelect;
     private DatePickerDialog.OnDateSetListener onCurrentDateSetListener;
     private String currentDate;
+    private ImageView imageView;
 
     //Camera page
     private Button btnTakePhoto;
@@ -186,8 +190,10 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
             btnSubmitWeight = view.findViewById(R.id.BtnSubmitWight);
             txtViewBMI = view.findViewById(R.id.TxtViewBMI);
             txtCurrentDateSelect = view.findViewById(R.id.TxtCurrentDateSelect);
+            imageView = view.findViewById(R.id.ImgDashboardPhoto);
 
             LoadCurrentWeightAndDate();
+            getPhotoForDashboard();
 
             txtCurrentDateSelect.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -227,6 +233,8 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
                     }else{
                         displayWeight.setText((int)((progress/10)*2.205) + " Lbs");
                     }
+                    createPieChartWeight();
+                    calculateBMI(progress/10);
                 }
 
                 @Override
@@ -241,20 +249,29 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
             });
 
             createPieChartWeight();
-            calculateBMI();
+            calculateBMI(0);
             btnSubmitWeight.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(currentDate!=null) {
+                    if(currentDate!=null && imageView.getDrawable() != null) {
                         double weightSet = weightBar.getProgress() / 10;
-                        sqlLiteManager.saveWeightAndDate(weightSet, currentDate);
+                        Bitmap image = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+                        sqlLiteManager.saveWeightWithDateAndImage(weightSet, currentDate, image);
                         createPieChartWeight();
-                        calculateBMI();
+                        calculateBMI(weightSet);
                     }
                     else
                     {
-                        txtCurrentDateSelect.setText("Tap to select");
-                        txtCurrentDateSelect.setTextColor(Color.parseColor("#FF0000"));
+                        if(currentDate==null) {
+                            txtCurrentDateSelect.setText("Tap to select");
+                            txtCurrentDateSelect.setTextColor(Color.parseColor("#FF0000"));
+                        }
+
+                        if(imageView.getDrawable() == null)
+                        {
+                            Toast.makeText(v.getContext(), "Click Picture from Camera First!", Toast.LENGTH_SHORT).show();
+                        }
+
                     }
                 }
             });
@@ -620,11 +637,15 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
         LoadCurrentWeightAndDate();
     }
 
-    private void calculateBMI(){
+    private void calculateBMI(double weight){
         try{
             double bodyMassIndex = 0;
+            double userWeight = 0;
             //weight will ve in kgs always
-            double userWeight = sqlLiteManager.getWeight();//70 default
+            if(weight==0)
+                userWeight = sqlLiteManager.getWeight();//70 default
+            else
+                userWeight = weight;
             //height will be depends on imperial or metrics
 
             double userHeight = sqlLiteManager.getHeight();//70 default
@@ -812,6 +833,24 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
                     Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length); //Converts the Bytes to BitMap
 
                     imgCurrentPhoto.setImageBitmap(bitmap);
+                }
+            }
+        }catch (Exception e){
+
+        }
+    }
+
+    private void getPhotoForDashboard(){
+        Cursor img = sqlLiteManager.getImage();
+
+        try{
+            if(img.getCount() != -1) {
+                img.moveToNext();
+                byte[] byteArray = img.getBlob(0); //gets the Bytes that the database holds
+                if(byteArray != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length); //Converts the Bytes to BitMap
+
+                    imageView.setImageBitmap(bitmap);
                 }
             }
         }catch (Exception e){
