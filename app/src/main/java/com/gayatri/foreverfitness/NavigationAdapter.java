@@ -269,7 +269,7 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
 
                         if(imageView.getDrawable() == null)
                         {
-                            Toast.makeText(v.getContext(), "Click Picture from Camera First!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(v.getContext(), "Please capture picture from Camera First!", Toast.LENGTH_SHORT).show();
                         }
 
                     }
@@ -358,7 +358,8 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    sqlLiteManager.setHeight(Double.parseDouble(s.toString()));
+                    if(s.toString().length()>0)
+                        sqlLiteManager.setHeight(Double.parseDouble(s.toString()));
                 }
 
                 @Override
@@ -375,7 +376,8 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    sqlLiteManager.setRegisteredWeight(Double.parseDouble(s.toString()));
+                    if(s.toString().length()>0)
+                        sqlLiteManager.setRegisteredWeight(Double.parseDouble(s.toString()));
                 }
 
                 @Override
@@ -694,7 +696,7 @@ public class NavigationAdapter extends PagerAdapter implements SensorEventListen
         }
         PieDataSet weightPieDataSet;
         if((int)userWeight< getWeight){
-            weightPieDataSet = new PieDataSet(weightPieList,"Weight to gain");
+            weightPieDataSet = new PieDataSet(weightPieList,"Weight to Gain");
         }else{
             weightPieDataSet = new PieDataSet(weightPieList,"Weight to Lose");
         }

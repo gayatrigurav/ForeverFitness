@@ -199,6 +199,9 @@ class SqlLiteManager extends SQLiteOpenHelper {
         else{
             getUserId(Name);
             setDefaultGoals(goalWeight, goalDate, 10000);
+            SimpleDateFormat simpleDate = new SimpleDateFormat("dd-MM-yyyy");
+            String currentDate = simpleDate.format(new Date());
+            saveWeightWithDateDefault(weight,currentDate);
             return true;
         }
     }
@@ -293,6 +296,16 @@ class SqlLiteManager extends SQLiteOpenHelper {
 
     }
 
+    public void saveWeightWithDateDefault(double weight, String currentDateTime){
+
+        SQLiteDatabase sqLiteDatabase = getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_ID",this.UserId);
+        contentValues.put("weight",weight);
+        contentValues.put("daytime", currentDateTime);
+
+        sqLiteDatabase.insert("milestone",null, contentValues);
+    }
 
     public void saveWeightWithDateAndImage(double weight, String currentDateTime, Bitmap image){
 

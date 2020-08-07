@@ -79,7 +79,7 @@ public class HistoryActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         int milestoneId = Integer.parseInt(txtMilestoneId.getTag().toString());
                         sqlLiteManager.deleteUserHistoryEntry(milestoneId);
-                        Toast.makeText(HistoryActivity.this, "This Entry Deleted!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(HistoryActivity.this, "One Entry Deleted!", Toast.LENGTH_SHORT).show();
                         linearLayoutHistory.removeView(view);
                         //linearLayoutHistory.removeDetachedView(view,false);
 
